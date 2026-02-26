@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import api from '@/lib/api';
+import { DEMO_MODE, DEMO_USER, DEMO_TOKEN } from '@/lib/demo-data';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,8 +30,8 @@ export default function LoginPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) => api.post('/auth/login', data),
-    onSuccess: (res) => {
+    mutationFn: (data: FormData) => api.post('/auth/login', data) as Promise<{ data: any }>,
+    onSuccess: (res: any) => {
       const { accessToken, user } = res.data;
       login(accessToken, user);
       toast.success('Welcome back!');
@@ -69,6 +70,20 @@ export default function LoginPage() {
               {mutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Sign In
             </Button>
+            {DEMO_MODE && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  login(DEMO_TOKEN, DEMO_USER);
+                  toast.success('Logged in with demo account!');
+                  navigate('/');
+                }}
+              >
+                🚀 Demo Login (No Backend Needed)
+              </Button>
+            )}
             <div className="flex items-center justify-between w-full text-sm">
               <Link to="/forgot-password" className="text-primary hover:underline">Forgot password?</Link>
               <Link to="/register" className="text-primary hover:underline">Create account</Link>
