@@ -157,9 +157,16 @@
     left: 50%;
     top: 0;
     transform: translateX(-50%);
-    width: 300px;
+    width: 80mm;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 4mm 0;
   }
   .print\\:hidden {
     display: none !important;
+  }
+  @page {
+    size: 80mm auto;
+    margin: 0;
   }
 }

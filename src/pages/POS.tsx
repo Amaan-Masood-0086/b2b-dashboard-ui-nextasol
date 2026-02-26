@@ -8,6 +8,7 @@ import { useCartStore, CartModifier } from '@/stores/cart-store';
 import { Product, Category, Table, ModifierGroup, Customer } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
 import { ReceiptDialog } from '@/components/pos/ReceiptDialog';
+import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -498,6 +499,9 @@ export default function POSPage() {
         businessName="CloudPOS Demo Restaurant"
         branchName="Main Branch"
       />
+
+      {/* Keyboard shortcuts help */}
+      <KeyboardShortcutsDialog />
       </div>
     </div>
   );
