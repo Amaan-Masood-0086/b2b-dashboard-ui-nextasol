@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Download, Eye, Search, XCircle, RotateCcw, CalendarIcon, ShoppingCart } from 'lucide-react';
+import { Download, Eye, Search, XCircle, RotateCcw, CalendarIcon, ShoppingCart, Printer } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Order, Customer } from '@/lib/types';
@@ -240,7 +240,13 @@ export default function OrdersPage() {
               <div className="text-right space-y-1">
                 <p>Subtotal: {formatCurrency(Number(orderDetail.data.subtotal))}</p>
                 {orderDetail.data.discountAmount > 0 && <p className="text-destructive">Discount: -{formatCurrency(Number(orderDetail.data.discountAmount))}</p>}
+                {orderDetail.data.tax > 0 && <p>Tax: {formatCurrency(Number(orderDetail.data.tax))}</p>}
                 <p className="font-bold text-base">Total: {formatCurrency(Number(orderDetail.data.total))}</p>
+              </div>
+              <div className="flex justify-end mt-2">
+                <Button variant="outline" size="sm" onClick={() => window.print()}>
+                  <Printer className="h-3.5 w-3.5 mr-1" /> Print Receipt
+                </Button>
               </div>
             </div>
           )}

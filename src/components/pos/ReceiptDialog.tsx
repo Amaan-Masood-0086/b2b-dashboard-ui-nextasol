@@ -6,16 +6,27 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CartItem } from '@/stores/cart-store';
 
+interface SplitPaymentInfo {
+  cashAmount: number;
+  cardAmount: number;
+}
+
 interface ReceiptData {
   orderNumber: string;
   items: CartItem[];
   subtotal: number;
   discount: number;
+  tax: number;
   total: number;
   paymentMethod: string;
   amountReceived?: number;
   change?: number;
   orderType: string;
+  customerName?: string;
+  membershipName?: string;
+  membershipBenefit?: string;
+  orderNotes?: string;
+  splitPayment?: SplitPaymentInfo;
 }
 
 interface ReceiptDialogProps {
@@ -48,6 +59,16 @@ export function ReceiptDialog({ open, onOpenChange, receipt, businessName = 'Clo
             <span className="capitalize">{receipt.orderType.replace('_', ' ')}</span>
           </div>
 
+          {receipt.customerName && (
+            <div className="text-xs">
+              <span className="text-muted-foreground">Customer: </span>
+              <span>{receipt.customerName}</span>
+              {receipt.membershipName && (
+                <span className="ml-1 text-primary">({receipt.membershipName})</span>
+              )}
+            </div>
+          )}
+
           <Separator />
 
           <div className="space-y-2">
@@ -65,6 +86,11 @@ export function ReceiptDialog({ open, onOpenChange, receipt, businessName = 'Clo
                       {item.modifiers.map((m) => m.optionName).join(', ')}
                     </p>
                   )}
+                  {item.notes && (
+                    <p className="text-[10px] text-muted-foreground ml-4 italic">
+                      Note: {item.notes}
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -75,7 +101,13 @@ export function ReceiptDialog({ open, onOpenChange, receipt, businessName = 'Clo
           <div className="space-y-1">
             <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(receipt.subtotal)}</span></div>
             {receipt.discount > 0 && (
-              <div className="flex justify-between text-destructive"><span>Discount</span><span>-{formatCurrency(receipt.discount)}</span></div>
+              <div className="flex justify-between text-destructive">
+                <span>Discount{receipt.membershipBenefit ? ` (${receipt.membershipBenefit})` : ''}</span>
+                <span>-{formatCurrency(receipt.discount)}</span>
+              </div>
+            )}
+            {receipt.tax > 0 && (
+              <div className="flex justify-between"><span>Tax</span><span>{formatCurrency(receipt.tax)}</span></div>
             )}
             <div className="flex justify-between font-bold text-base"><span>Total</span><span>{formatCurrency(receipt.total)}</span></div>
           </div>
@@ -83,14 +115,33 @@ export function ReceiptDialog({ open, onOpenChange, receipt, businessName = 'Clo
           <Separator />
 
           <div className="space-y-1 text-xs">
-            <div className="flex justify-between"><span>Payment</span><span className="capitalize">{receipt.paymentMethod}</span></div>
-            {receipt.amountReceived != null && (
+            <div className="flex justify-between">
+              <span>Payment</span>
+              <span className="capitalize">{receipt.paymentMethod}</span>
+            </div>
+            {receipt.paymentMethod === 'split' && receipt.splitPayment && (
+              <>
+                <div className="flex justify-between text-muted-foreground"><span>  Cash</span><span>{formatCurrency(receipt.splitPayment.cashAmount)}</span></div>
+                <div className="flex justify-between text-muted-foreground"><span>  Card</span><span>{formatCurrency(receipt.splitPayment.cardAmount)}</span></div>
+              </>
+            )}
+            {receipt.amountReceived != null && receipt.paymentMethod !== 'split' && (
               <>
                 <div className="flex justify-between"><span>Received</span><span>{formatCurrency(receipt.amountReceived)}</span></div>
                 <div className="flex justify-between"><span>Change</span><span>{formatCurrency(receipt.change ?? 0)}</span></div>
               </>
             )}
           </div>
+
+          {receipt.orderNotes && (
+            <>
+              <Separator />
+              <div className="text-xs">
+                <span className="text-muted-foreground">Notes: </span>
+                <span>{receipt.orderNotes}</span>
+              </div>
+            </>
+          )}
 
           <Separator />
 
