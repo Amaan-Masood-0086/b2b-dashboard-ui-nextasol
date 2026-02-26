@@ -73,6 +73,14 @@ function getDemoData(method: string, url: string): any {
   if (u === '/notifications/unread-count') return { count: DEMO_NOTIFICATIONS.filter(n => !n.isRead).length };
   if (/\/notifications/.test(u)) return { message: 'OK' };
 
+  // Admin (must be before generic /users and /merchants patterns)
+  if (u === '/admin/dashboard') return { totalMerchants: DEMO_MERCHANTS.length, activeSubscriptions: DEMO_MERCHANTS.filter(m => m.status === 'active').length, totalRevenue: DEMO_ADMIN_REVENUE.totalRevenue, mrr: DEMO_ADMIN_REVENUE.mrr };
+  if (u === '/admin/merchants' && method === 'get') return DEMO_MERCHANTS;
+  if (/^\/admin\/merchants\/[^/]+$/.test(u)) return DEMO_MERCHANTS.find(m => u.includes(m.id)) || DEMO_MERCHANTS[0];
+  if (u === '/admin/users') return DEMO_ADMIN_USERS;
+  if (u === '/admin/payments') return DEMO_ADMIN_PAYMENTS;
+  if (u === '/admin/revenue') return DEMO_ADMIN_REVENUE;
+
   // Users
   if (u === '/users' && method === 'get') return DEMO_USERS;
   if (/\/users/.test(u)) return { message: 'OK' };
@@ -88,14 +96,6 @@ function getDemoData(method: string, url: string): any {
   if (u === '/billing/subscription') return DEMO_BILLING_SUBSCRIPTION;
   if (u === '/billing/invoices') return DEMO_INVOICES;
   if (u === '/billing/upgrade') return { message: 'Upgraded' };
-
-  // Admin
-  if (u === '/admin/dashboard') return { totalMerchants: DEMO_MERCHANTS.length, activeSubscriptions: DEMO_MERCHANTS.filter(m => m.status === 'active').length, totalRevenue: DEMO_ADMIN_REVENUE.totalRevenue, mrr: DEMO_ADMIN_REVENUE.mrr };
-  if (u === '/admin/merchants' && method === 'get') return DEMO_MERCHANTS;
-  if (/^\/admin\/merchants\/[^/]+$/.test(u)) return DEMO_MERCHANTS.find(m => u.includes(m.id)) || DEMO_MERCHANTS[0];
-  if (u === '/admin/users') return DEMO_ADMIN_USERS;
-  if (u === '/admin/payments') return DEMO_ADMIN_PAYMENTS;
-  if (u === '/admin/revenue') return DEMO_ADMIN_REVENUE;
   if (u === '/subscription-plans') return [{ id: 'plan-1', name: 'Starter', pricePerBranch: 29 }, { id: 'plan-2', name: 'Pro', pricePerBranch: 59 }];
   if (u === '/admin/subscriptions') return [];
 
