@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { UpgradeGate } from '@/components/UpgradeGate';
 import { format, subDays } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
@@ -31,6 +32,7 @@ export default function ReportsPage() {
   if (!branchId) return <div className="flex items-center justify-center h-[60vh]"><p className="text-muted-foreground">Please select a branch.</p></div>;
 
   return (
+    <UpgradeGate requiredPlan="Pro" featureName="Advanced Reports">
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold">Reports</h1>
@@ -74,5 +76,6 @@ export default function ReportsPage() {
         <Card><CardHeader><CardTitle className="text-base">Top Products</CardTitle></CardHeader><CardContent><ResponsiveContainer width="100%" height={250}><BarChart data={top||[]} layout="vertical"><CartesianGrid strokeDasharray="3 3"/><XAxis type="number" tick={{fontSize:12}}/><YAxis type="category" dataKey="name" tick={{fontSize:12}} width={100}/><Tooltip/><Bar dataKey="totalSold" fill="hsl(220,70%,50%)" radius={[0,4,4,0]}/></BarChart></ResponsiveContainer></CardContent></Card>
       </div>
     </div>
+    </UpgradeGate>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { UpgradeGate } from '@/components/UpgradeGate';
 import { AlertCircle, Download, Plus, Search, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { exportToCSV } from '@/lib/csv-export';
@@ -62,8 +63,8 @@ export default function InventoryPage() {
   if (!branchId) return <div className="flex items-center justify-center h-[60vh]"><p className="text-muted-foreground">Please select a branch.</p></div>;
 
   return (
+    <UpgradeGate requiredPlan="Pro" featureName="Inventory Management">
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Inventory</h1>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => exportToCSV(logList, [
@@ -162,5 +163,6 @@ export default function InventoryPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </UpgradeGate>
   );
 }
