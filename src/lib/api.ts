@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_BRANCHES, DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_TABLES, DEMO_ORDERS, DEMO_CUSTOMERS, DEMO_SHIFTS, DEMO_SHIFT_HISTORY, DEMO_NOTIFICATIONS, DEMO_INVENTORY_LOGS, DEMO_USERS, DEMO_AUDIT_LOGS, DEMO_WEEKLY_SALES, DEMO_PAYMENT_BREAKDOWN, DEMO_ORDER_TYPES, DEMO_TOP_PRODUCTS, DEMO_DAILY_REPORT, DEMO_MERCHANT, DEMO_MODIFIER_GROUPS, DEMO_BILLING_PLANS, DEMO_BILLING_SUBSCRIPTION, DEMO_INVOICES, DEMO_ADMIN_USERS, DEMO_ADMIN_PAYMENTS, DEMO_ADMIN_REVENUE, DEMO_MERCHANTS, DEMO_MERCHANT_BRANCHES, DEMO_MERCHANT_ORDERS, DEMO_MERCHANT_NOTES } from './demo-data';
+import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_BRANCHES, DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_TABLES, DEMO_ORDERS, DEMO_CUSTOMERS, DEMO_SHIFTS, DEMO_SHIFT_HISTORY, DEMO_NOTIFICATIONS, DEMO_INVENTORY_LOGS, DEMO_USERS, DEMO_AUDIT_LOGS, DEMO_WEEKLY_SALES, DEMO_PAYMENT_BREAKDOWN, DEMO_ORDER_TYPES, DEMO_TOP_PRODUCTS, DEMO_DAILY_REPORT, DEMO_MERCHANT, DEMO_MODIFIER_GROUPS, DEMO_BILLING_PLANS, DEMO_BILLING_SUBSCRIPTION, DEMO_INVOICES, DEMO_ADMIN_USERS, DEMO_ADMIN_PAYMENTS, DEMO_ADMIN_REVENUE, DEMO_MERCHANTS, DEMO_MERCHANT_BRANCHES, DEMO_MERCHANT_ORDERS, DEMO_MERCHANT_NOTES, DEMO_MEMBERSHIPS } from './demo-data';
 
 const API_URL = 'http://localhost:3000/api/v1';
 
@@ -71,6 +71,13 @@ function getDemoData(method: string, url: string, body?: any): any {
   // Modifiers
   if (/\/modifiers$/.test(u) && method === 'get') return DEMO_MODIFIER_GROUPS;
   if (/\/modifiers/.test(u)) return DEMO_MODIFIER_GROUPS[0];
+
+  // Memberships
+  if (/\/memberships$/.test(u) && method === 'get') return DEMO_MEMBERSHIPS;
+  if (/\/memberships$/.test(u) && method === 'post') return { ...body, id: 'mem-' + Date.now(), code: body?.code || 'NEW-' + Date.now(), isActive: true, createdAt: new Date().toISOString() };
+  if (/^\/memberships\/[^/]+$/.test(u) && method === 'patch') return { ...DEMO_MEMBERSHIPS[0], ...body };
+  if (/^\/memberships\/[^/]+$/.test(u) && method === 'delete') return { message: 'Deleted' };
+  if (/^\/memberships\/[^/]+$/.test(u)) return DEMO_MEMBERSHIPS[0];
 
   // Shifts
   if (/\/shifts\/current$/.test(u)) return DEMO_SHIFTS[0];

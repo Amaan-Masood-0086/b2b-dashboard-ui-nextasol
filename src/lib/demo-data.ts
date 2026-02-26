@@ -71,10 +71,18 @@ export const DEMO_ORDERS = [
   { id: 'ord-006', orderNumber: 'ORD-1006', orderType: 'takeaway' as const, status: 'refunded' as const, items: [{ id: 'oi-7', productId: 'prod-002', product: { name: 'Chicken Burger' }, quantity: 2, unitPrice: 9.49, notes: '' }], subtotal: 18.98, tax: 3.04, total: 22.02, paymentMethod: 'card' as const, createdAt: '2026-02-24T09:00:00Z', updatedAt: '2026-02-24T10:00:00Z' },
 ];
 
+export const DEMO_MEMBERSHIPS = [
+  { id: 'mem-001', name: 'Gold Member', code: 'GOLD2026', benefitType: 'percentage_discount' as const, benefitValue: 15, description: '15% discount on all orders', isActive: true, validFrom: '2026-01-01', validUntil: '2026-12-31', createdAt: '2025-12-20' },
+  { id: 'mem-002', name: 'Silver Member', code: 'SILVER2026', benefitType: 'percentage_discount' as const, benefitValue: 10, description: '10% discount on all orders', isActive: true, validFrom: '2026-01-01', validUntil: '2026-12-31', createdAt: '2025-12-20' },
+  { id: 'mem-003', name: 'Free Delivery Club', code: 'FREEDEL', benefitType: 'free_delivery' as const, benefitValue: 0, description: 'Free delivery on all orders', isActive: true, validFrom: '2026-01-01', validUntil: '2026-06-30', createdAt: '2026-01-01' },
+  { id: 'mem-004', name: 'Flat $5 Off', code: 'FLAT5OFF', benefitType: 'fixed_discount' as const, benefitValue: 5, description: '$5 off every order above $20', isActive: true, createdAt: '2026-02-01' },
+  { id: 'mem-005', name: 'Buy 2 Get 1 Free', code: 'B2G1FREE', benefitType: 'custom_deal' as const, benefitValue: 0, description: 'Buy any 2 burgers, get 1 free (cheapest)', isActive: false, createdAt: '2026-01-15' },
+];
+
 export const DEMO_CUSTOMERS = [
-  { id: 'cust-001', name: 'Sarah Johnson', email: 'sarah@example.com', phone: '+1-555-0101', notes: 'Prefers no onions', totalOrders: 12, totalSpent: 156.50 },
-  { id: 'cust-002', name: 'Mike Chen', email: 'mike@example.com', phone: '+1-555-0102', notes: '', totalOrders: 8, totalSpent: 98.20 },
-  { id: 'cust-003', name: 'Emily Davis', email: 'emily@example.com', phone: '+1-555-0103', notes: 'VIP customer', totalOrders: 25, totalSpent: 430.75 },
+  { id: 'cust-001', name: 'Sarah Johnson', email: 'sarah@example.com', phone: '+1-555-0101', notes: 'Prefers no onions', totalOrders: 12, totalSpent: 156.50, membershipId: 'mem-001', membership: { id: 'mem-001', name: 'Gold Member', code: 'GOLD2026', benefitType: 'percentage_discount' as const, benefitValue: 15, description: '15% discount on all orders', isActive: true, createdAt: '2025-12-20' } },
+  { id: 'cust-002', name: 'Mike Chen', email: 'mike@example.com', phone: '+1-555-0102', notes: '', totalOrders: 8, totalSpent: 98.20, membershipId: 'mem-002', membership: { id: 'mem-002', name: 'Silver Member', code: 'SILVER2026', benefitType: 'percentage_discount' as const, benefitValue: 10, description: '10% discount on all orders', isActive: true, createdAt: '2025-12-20' } },
+  { id: 'cust-003', name: 'Emily Davis', email: 'emily@example.com', phone: '+1-555-0103', notes: 'VIP customer', totalOrders: 25, totalSpent: 430.75, membershipId: 'mem-003', membership: { id: 'mem-003', name: 'Free Delivery Club', code: 'FREEDEL', benefitType: 'free_delivery' as const, benefitValue: 0, description: 'Free delivery on all orders', isActive: true, createdAt: '2026-01-01' } },
   { id: 'cust-004', name: 'Ahmed Khan', email: 'ahmed@example.com', phone: '+1-555-0104', notes: '', totalOrders: 5, totalSpent: 62.30 },
 ];
 
