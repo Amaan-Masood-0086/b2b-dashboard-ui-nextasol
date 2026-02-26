@@ -16,9 +16,11 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  currency: string;
   login: (token: string, user: User) => void;
   logout: () => void;
   setUser: (user: User) => void;
+  setCurrency: (currency: string) => void;
   selectedBranchId: string | null;
   setSelectedBranchId: (id: string) => void;
 }
@@ -31,6 +33,7 @@ export const useAuthStore = create<AuthState>((set) => {
     user: storedUser ? JSON.parse(storedUser) : null,
     token: storedToken,
     isAuthenticated: !!storedToken,
+    currency: localStorage.getItem('currency') || 'USD',
     selectedBranchId: localStorage.getItem('selectedBranchId'),
 
     login: (token, user) => {
@@ -50,6 +53,11 @@ export const useAuthStore = create<AuthState>((set) => {
     setUser: (user) => {
       localStorage.setItem('user', JSON.stringify(user));
       set({ user });
+    },
+
+    setCurrency: (currency) => {
+      localStorage.setItem('currency', currency);
+      set({ currency });
     },
 
     setSelectedBranchId: (id) => {

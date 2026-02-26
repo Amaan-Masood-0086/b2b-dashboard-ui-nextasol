@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Category } from '@/lib/types';
@@ -76,7 +77,7 @@ export default function CategoriesPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {list.length === 0 && <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">No categories</TableCell></TableRow>}
+              {list.length === 0 && <TableRow><TableCell colSpan={3} className="text-center p-0"><EmptyState icon={Tag} title="No categories yet" description="Create categories to organize your menu products." actionLabel="Create Category" onAction={openCreate} /></TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>

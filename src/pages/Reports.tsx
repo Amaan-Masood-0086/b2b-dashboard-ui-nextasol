@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -62,7 +63,7 @@ export default function ReportsPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {[{ t: 'Revenue', v: daily?.totalRevenue }, { t: 'Orders', v: daily?.totalOrders }, { t: 'Avg Value', v: daily?.avgOrderValue }].map(s => (
-          <Card key={s.t}><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{s.t}</p><p className="text-2xl font-bold">{s.t !== 'Orders' ? `$${Number(s.v ?? 0).toFixed(2)}` : s.v ?? 0}</p></CardContent></Card>
+          <Card key={s.t}><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{s.t}</p><p className="text-2xl font-bold">{s.t !== 'Orders' ? formatCurrency(Number(s.v ?? 0)) : s.v ?? 0}</p></CardContent></Card>
         ))}
       </div>
 

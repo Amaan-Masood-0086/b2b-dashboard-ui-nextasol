@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Clock, DollarSign, ArrowUp, ArrowDown } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Shift } from '@/lib/types';
@@ -87,9 +88,9 @@ export default function ShiftsPage() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div><span className="text-muted-foreground">Opened:</span><br />{format(new Date(currentShift.openedAt), 'PPp')}</div>
-              <div><span className="text-muted-foreground">Opening Balance:</span><br />${Number(currentShift.openingBalance).toFixed(2)}</div>
-              <div><span className="text-muted-foreground">Expected Balance:</span><br />${Number(currentShift.expectedBalance ?? 0).toFixed(2)}</div>
-              <div><span className="text-muted-foreground">Total Sales:</span><br />${Number(currentShift.totalSales ?? 0).toFixed(2)}</div>
+              <div><span className="text-muted-foreground">Opening Balance:</span><br />{formatCurrency(Number(currentShift.openingBalance))}</div>
+              <div><span className="text-muted-foreground">Expected Balance:</span><br />{formatCurrency(Number(currentShift.expectedBalance ?? 0))}</div>
+              <div><span className="text-muted-foreground">Total Sales:</span><br />{formatCurrency(Number(currentShift.totalSales ?? 0))}</div>
             </div>
           </CardContent>
         </Card>
@@ -115,17 +116,17 @@ export default function ShiftsPage() {
                 <TableRow key={s.id}>
                   <TableCell className="text-sm">{format(new Date(s.openedAt), 'MMM dd, HH:mm')}</TableCell>
                   <TableCell className="text-sm">{s.closedAt ? format(new Date(s.closedAt), 'MMM dd, HH:mm') : '—'}</TableCell>
-                  <TableCell>${Number(s.openingBalance).toFixed(2)}</TableCell>
-                  <TableCell>{s.closingBalance != null ? `$${Number(s.closingBalance).toFixed(2)}` : '—'}</TableCell>
-                  <TableCell>{s.expectedBalance != null ? `$${Number(s.expectedBalance).toFixed(2)}` : '—'}</TableCell>
+                  <TableCell>{formatCurrency(Number(s.openingBalance))}</TableCell>
+                  <TableCell>{s.closingBalance != null ? formatCurrency(Number(s.closingBalance)) : '—'}</TableCell>
+                  <TableCell>{s.expectedBalance != null ? formatCurrency(Number(s.expectedBalance)) : '—'}</TableCell>
                   <TableCell>
                     {s.variance != null ? (
                       <span className={Number(s.variance) >= 0 ? 'text-success' : 'text-destructive'}>
-                        ${Number(s.variance).toFixed(2)}
+                        {formatCurrency(Number(s.variance))}
                       </span>
                     ) : '—'}
                   </TableCell>
-                  <TableCell className="font-medium">${Number(s.totalSales ?? 0).toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">{formatCurrency(Number(s.totalSales ?? 0))}</TableCell>
                 </TableRow>
               ))}
               {historyList.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No shift history</TableCell></TableRow>}

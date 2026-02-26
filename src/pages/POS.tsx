@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Minus, Trash2, ShoppingBag, X, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore, CartModifier } from '@/stores/cart-store';
 import { Product, Category, Table, ModifierGroup, Customer } from '@/lib/types';
+import { formatCurrency } from '@/lib/currency';
+import { ReceiptDialog } from '@/components/pos/ReceiptDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +23,7 @@ export default function POSPage() {
   const { selectedBranchId } = useAuthStore();
   const branchId = selectedBranchId;
   const queryClient = useQueryClient();
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const cart = useCartStore();
   const [search, setSearch] = useState('');
@@ -31,6 +34,38 @@ export default function POSPage() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'split'>('cash');
   const [amountReceived, setAmountReceived] = useState('');
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptData, setReceiptData] = useState<any>(null);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+
+      if (e.key === 'F2') {
+        e.preventDefault();
+        searchRef.current?.focus();
+        return;
+      }
+      if (e.key === 'Escape') {
+        if (checkoutOpen) setCheckoutOpen(false);
+        else if (modifierProduct) setModifierProduct(null);
+        else if (search) setSearch('');
+        return;
+      }
+      if (isInput) return;
+      if (e.key === 'Enter' && cart.items.length > 0 && !checkoutOpen && !modifierProduct) {
+        e.preventDefault();
+        setCheckoutOpen(true);
+      }
+      if (e.key === 'Delete' && cart.items.length > 0 && !checkoutOpen) {
+        if (confirm('Clear cart?')) cart.clearCart();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [checkoutOpen, modifierProduct, search, cart.items.length]);
 
   const { data: categories } = useQuery({
     queryKey: ['categories', branchId],
@@ -138,6 +173,7 @@ export default function POSPage() {
 
       const orderRes: any = await createOrder.mutateAsync(orderData);
       const orderId = orderRes.data.id;
+      const orderNumber = orderRes.data.orderNumber;
 
       await checkoutOrder.mutateAsync({
         orderId,
@@ -147,10 +183,24 @@ export default function POSPage() {
         },
       });
 
-      toast.success(`Order #${orderRes.data.orderNumber} completed!`);
+      const receiptInfo = {
+        orderNumber,
+        items: [...cart.items],
+        subtotal,
+        discount,
+        total,
+        paymentMethod,
+        amountReceived: paymentMethod === 'cash' ? parseFloat(amountReceived) : undefined,
+        change: paymentMethod === 'cash' ? parseFloat(amountReceived) - total : undefined,
+        orderType: cart.orderType,
+      };
+
+      toast.success(`Order #${orderNumber} completed!`);
       cart.clearCart();
       setCheckoutOpen(false);
       setAmountReceived('');
+      setReceiptData(receiptInfo);
+      setReceiptOpen(true);
       queryClient.invalidateQueries({ queryKey: ['products', branchId] });
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Checkout failed');
@@ -184,7 +234,7 @@ export default function POSPage() {
         <div className="px-4 py-3 space-y-3 border-b">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search products..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input ref={searchRef} placeholder="Search products... (F2)" className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-1">
             <Button size="sm" variant={!selectedCategory ? 'default' : 'outline'} onClick={() => setSelectedCategory(null)}>
@@ -214,7 +264,7 @@ export default function POSPage() {
                     </div>
                   )}
                   <p className="font-medium text-sm truncate">{product.name}</p>
-                  <p className="text-sm text-primary font-semibold">${product.price.toFixed(2)}</p>
+                  <p className="text-sm text-primary font-semibold">{formatCurrency(product.price)}</p>
                   {product.stock <= (product.lowStockThreshold || 5) && (
                     <Badge variant="outline" className="text-warning border-warning/30 text-[10px] mt-1">Low stock</Badge>
                   )}
@@ -320,7 +370,7 @@ export default function POSPage() {
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
-                      <p className="text-sm font-medium">${((item.price + modTotal) * item.quantity).toFixed(2)}</p>
+                      <p className="text-sm font-medium">{formatCurrency((item.price + modTotal) * item.quantity)}</p>
                     </div>
                   </div>
                 );
@@ -353,13 +403,14 @@ export default function POSPage() {
             </div>
             <Separator />
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-              {discount > 0 && <div className="flex justify-between text-destructive"><span>Discount</span><span>-${discount.toFixed(2)}</span></div>}
-              <div className="flex justify-between font-bold text-base"><span>Total</span><span>${total.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+              {discount > 0 && <div className="flex justify-between text-destructive"><span>Discount</span><span>-{formatCurrency(discount)}</span></div>}
+              <div className="flex justify-between font-bold text-base"><span>Total</span><span>{formatCurrency(total)}</span></div>
             </div>
             <Button className="w-full" onClick={() => setCheckoutOpen(true)}>
-              Checkout · ${total.toFixed(2)}
+              Checkout · {formatCurrency(total)}
             </Button>
+            <p className="text-[10px] text-muted-foreground text-center">Press Enter to checkout</p>
           </div>
         )}
       </div>
@@ -383,7 +434,7 @@ export default function POSPage() {
                     const isSelected = selectedModifiers.some((m) => m.optionId === opt.id);
                     return (
                       <Button key={opt.id} size="sm" variant={isSelected ? 'default' : 'outline'} onClick={() => toggleModifier(group, opt)}>
-                        {opt.name} {opt.priceAdjustment > 0 && `+$${opt.priceAdjustment}`}
+                        {opt.name} {opt.priceAdjustment > 0 && `+${formatCurrency(opt.priceAdjustment)}`}
                       </Button>
                     );
                   })}
@@ -401,7 +452,7 @@ export default function POSPage() {
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Checkout — ${total.toFixed(2)}</DialogTitle>
+            <DialogTitle>Checkout — {formatCurrency(total)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -419,7 +470,7 @@ export default function POSPage() {
                 <Label>Amount Received</Label>
                 <Input type="number" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)} placeholder="0.00" />
                 {parseFloat(amountReceived) >= total && (
-                  <p className="text-sm font-medium text-success">Change: ${change.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-success">Change: {formatCurrency(change)}</p>
                 )}
               </div>
             )}
@@ -435,6 +486,15 @@ export default function POSPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Receipt dialog */}
+      <ReceiptDialog
+        open={receiptOpen}
+        onOpenChange={setReceiptOpen}
+        receipt={receiptData}
+        businessName="CloudPOS Demo Restaurant"
+        branchName="Main Branch"
+      />
     </div>
   );
 }

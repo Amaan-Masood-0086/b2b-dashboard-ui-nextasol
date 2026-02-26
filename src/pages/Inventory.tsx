@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Download, Plus, Search } from 'lucide-react';
+import { AlertCircle, Download, Plus, Search, Package } from 'lucide-react';
 import { format } from 'date-fns';
+import { exportToCSV } from '@/lib/csv-export';
+import { EmptyState } from '@/components/EmptyState';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Product } from '@/lib/types';
@@ -64,7 +66,13 @@ export default function InventoryPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Inventory</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => window.open(`http://localhost:3000/api/v1/branches/${branchId}/export/inventory`, '_blank')}>
+          <Button variant="outline" size="sm" onClick={() => exportToCSV(logList, [
+            { header: 'Product', accessor: (l: any) => l.product?.name || '' },
+            { header: 'Type', accessor: (l: any) => l.type?.replace('_', ' ') || '' },
+            { header: 'Quantity', accessor: (l: any) => l.quantity },
+            { header: 'Reason', accessor: (l: any) => l.reason || '' },
+            { header: 'Date', accessor: (l: any) => format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm') },
+          ], 'inventory-logs')}>
             <Download className="h-4 w-4 mr-1" /> Export
           </Button>
           <Button size="sm" onClick={() => { setForm({ productId: '', quantity: '', type: 'manual_add', reason: '' }); setAdjustOpen(true); }}>
@@ -111,7 +119,7 @@ export default function InventoryPage() {
                   <TableCell className="text-muted-foreground text-sm">{format(new Date(log.createdAt), 'MMM dd, HH:mm')}</TableCell>
                 </TableRow>
               ))}
-              {logList.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No logs</TableCell></TableRow>}
+              {logList.length === 0 && <TableRow><TableCell colSpan={5} className="text-center p-0"><EmptyState icon={Package} title="No inventory logs" description="Stock adjustments and sales will be tracked here." /></TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>

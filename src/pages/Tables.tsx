@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, LayoutGrid } from 'lucide-react';
+import { EmptyState } from '@/components/EmptyState';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Table as TableType } from '@/lib/types';
@@ -86,7 +87,7 @@ export default function TablesPage() {
             </CardContent>
           </Card>
         ))}
-        {list.length === 0 && <p className="col-span-full text-center text-muted-foreground py-12">No tables yet</p>}
+        {list.length === 0 && <div className="col-span-full"><EmptyState icon={LayoutGrid} title="No tables yet" description="Add tables for dine-in orders." actionLabel="Add Table" onAction={() => { setForm({ tableNumber: '', capacity: '4' }); setDialogOpen(true); }} /></div>}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

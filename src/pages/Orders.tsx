@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Download, Eye, Search, XCircle, RotateCcw, CalendarIcon } from 'lucide-react';
+import { Download, Eye, Search, XCircle, RotateCcw, CalendarIcon, ShoppingCart } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Order, Customer } from '@/lib/types';
+import { formatCurrency } from '@/lib/currency';
+import { exportToCSV } from '@/lib/csv-export';
+import { EmptyState } from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -79,7 +82,15 @@ export default function OrdersPage() {
   });
 
   const handleExport = () => {
-    window.open(`http://localhost:3000/api/v1/branches/${branchId}/export/orders`, '_blank');
+    exportToCSV(orders, [
+      { header: 'Order #', accessor: (o) => o.orderNumber },
+      { header: 'Date', accessor: (o) => format(new Date(o.createdAt), 'yyyy-MM-dd HH:mm') },
+      { header: 'Type', accessor: (o) => o.orderType?.replace('_', ' ') || '' },
+      { header: 'Status', accessor: (o) => o.status },
+      { header: 'Items', accessor: (o) => o.items?.length ?? 0 },
+      { header: 'Total', accessor: (o) => Number(o.total).toFixed(2) },
+      { header: 'Payment', accessor: (o) => o.paymentMethod || '' },
+    ], `orders-${format(new Date(), 'yyyy-MM-dd')}`);
   };
 
   const orders: Order[] = ordersData?.data ?? [];
@@ -169,7 +180,7 @@ export default function OrdersPage() {
                   <TableCell className="capitalize">{order.orderType?.replace('_', ' ')}</TableCell>
                   <TableCell><Badge variant="outline" className={statusColors[order.status] || ''}>{order.status}</Badge></TableCell>
                   <TableCell>{order.items?.length ?? 0}</TableCell>
-                  <TableCell className="font-medium">${Number(order.total).toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">{formatCurrency(Number(order.total))}</TableCell>
                   <TableCell className="capitalize">{order.paymentMethod || '—'}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">{format(new Date(order.createdAt), 'MMM dd, HH:mm')}</TableCell>
                   <TableCell className="text-right">
@@ -186,7 +197,9 @@ export default function OrdersPage() {
                 </TableRow>
               ))}
               {orders.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No orders found</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center p-0">
+                  <EmptyState icon={ShoppingCart} title="No orders yet" description="Orders will appear here once customers start placing them." actionLabel="Go to POS" onAction={() => window.location.href = '/pos'} />
+                </TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -220,14 +233,14 @@ export default function OrdersPage() {
                       <p className="font-medium">{item.product?.name || 'Product'} × {item.quantity}</p>
                       {item.notes && <p className="text-xs text-muted-foreground">{item.notes}</p>}
                     </div>
-                    <p className="font-medium">${(item.unitPrice * item.quantity).toFixed(2)}</p>
+                    <p className="font-medium">{formatCurrency(item.unitPrice * item.quantity)}</p>
                   </div>
                 ))}
               </div>
               <div className="text-right space-y-1">
-                <p>Subtotal: ${Number(orderDetail.data.subtotal).toFixed(2)}</p>
-                {orderDetail.data.discountAmount > 0 && <p className="text-destructive">Discount: -${Number(orderDetail.data.discountAmount).toFixed(2)}</p>}
-                <p className="font-bold text-base">Total: ${Number(orderDetail.data.total).toFixed(2)}</p>
+                <p>Subtotal: {formatCurrency(Number(orderDetail.data.subtotal))}</p>
+                {orderDetail.data.discountAmount > 0 && <p className="text-destructive">Discount: -{formatCurrency(Number(orderDetail.data.discountAmount))}</p>}
+                <p className="font-bold text-base">Total: {formatCurrency(Number(orderDetail.data.total))}</p>
               </div>
             </div>
           )}

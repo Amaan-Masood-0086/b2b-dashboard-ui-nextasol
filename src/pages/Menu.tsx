@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Download, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Download, Pencil, Trash2, ShoppingBag } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Product, Category } from '@/lib/types';
+import { formatCurrency } from '@/lib/currency';
+import { exportToCSV } from '@/lib/csv-export';
+import { EmptyState } from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -96,7 +99,14 @@ export default function MenuPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Products</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => window.open(`http://localhost:3000/api/v1/branches/${branchId}/export/products`, '_blank')}>
+          <Button variant="outline" size="sm" onClick={() => exportToCSV(products, [
+            { header: 'Name', accessor: (p) => p.name },
+            { header: 'Category', accessor: (p) => p.category?.name || '' },
+            { header: 'Price', accessor: (p) => Number(p.price).toFixed(2) },
+            { header: 'Cost', accessor: (p) => p.costPrice ? Number(p.costPrice).toFixed(2) : '' },
+            { header: 'Stock', accessor: (p) => p.stock },
+            { header: 'SKU', accessor: (p) => p.sku || '' },
+          ], 'products')}>
             <Download className="h-4 w-4 mr-1" /> Export
           </Button>
           <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> Add Product</Button>
@@ -146,8 +156,8 @@ export default function MenuPage() {
                   </TableCell>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell>{p.category?.name || '—'}</TableCell>
-                  <TableCell>${Number(p.price).toFixed(2)}</TableCell>
-                  <TableCell>{p.costPrice ? `$${Number(p.costPrice).toFixed(2)}` : '—'}</TableCell>
+                  <TableCell>{formatCurrency(Number(p.price))}</TableCell>
+                  <TableCell>{p.costPrice ? formatCurrency(Number(p.costPrice)) : '—'}</TableCell>
                   <TableCell>
                     {p.stock}
                     {p.stock <= (p.lowStockThreshold || 5) && <Badge variant="outline" className="ml-2 text-[10px] text-warning border-warning/30">Low</Badge>}
@@ -159,7 +169,7 @@ export default function MenuPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {products.length === 0 && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>}
+              {products.length === 0 && <TableRow><TableCell colSpan={8} className="text-center p-0"><EmptyState icon={ShoppingBag} title="No products yet" description="Add your first product to start building your menu." actionLabel="Add Product" onAction={openCreate} /></TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
