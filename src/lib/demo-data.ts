@@ -199,10 +199,10 @@ export const DEMO_ADMIN_USER = {
 export const DEMO_ADMIN_TOKEN = 'demo-admin-jwt-token';
 
 export const DEMO_MERCHANTS = [
-  { id: 'demo-merchant-001', businessName: 'CloudPOS Demo Restaurant', phone: '+1-555-0100', address: '123 Main Street, City', currency: 'USD', timezone: 'America/New_York', status: 'active', planName: 'Pro', branchCount: 2, userCount: 4, createdAt: '2025-06-15' },
-  { id: 'demo-merchant-002', businessName: 'Burger Palace', phone: '+1-555-0200', address: '456 Oak Avenue, Town', currency: 'USD', timezone: 'America/Chicago', status: 'active', planName: 'Starter', branchCount: 1, userCount: 2, createdAt: '2025-09-01' },
-  { id: 'demo-merchant-003', businessName: 'Sushi Express', phone: '+1-555-0300', address: '789 Pine Blvd, Village', currency: 'USD', timezone: 'America/Los_Angeles', status: 'suspended', planName: 'Pro', branchCount: 3, userCount: 8, createdAt: '2025-04-20' },
-  { id: 'demo-merchant-004', businessName: 'Pizza Hub Central', phone: '+1-555-0400', address: '321 Elm St, Metro', currency: 'EUR', timezone: 'Europe/London', status: 'active', planName: 'Enterprise', branchCount: 12, userCount: 45, createdAt: '2024-11-10' },
+  { id: 'demo-merchant-001', businessName: 'CloudPOS Demo Restaurant', phone: '+1-555-0100', address: '123 Main Street, City', currency: 'USD', timezone: 'America/New_York', status: 'active', planName: 'Pro', planPrice: 49, branchCount: 2, userCount: 4, createdAt: '2025-06-15', subscriptionStatus: 'active' as const, trialEnd: null, nextBillingDate: '2026-03-26', businessType: 'Restaurant' },
+  { id: 'demo-merchant-002', businessName: 'Burger Palace', phone: '+1-555-0200', address: '456 Oak Avenue, Town', currency: 'USD', timezone: 'America/Chicago', status: 'active', planName: 'Starter', planPrice: 19, branchCount: 1, userCount: 2, createdAt: '2025-09-01', subscriptionStatus: 'trialing' as const, trialEnd: '2026-03-10', nextBillingDate: '2026-03-10', businessType: 'Fast Food' },
+  { id: 'demo-merchant-003', businessName: 'Sushi Express', phone: '+1-555-0300', address: '789 Pine Blvd, Village', currency: 'USD', timezone: 'America/Los_Angeles', status: 'suspended', planName: 'Pro', planPrice: 49, branchCount: 3, userCount: 8, createdAt: '2025-04-20', subscriptionStatus: 'past_due' as const, trialEnd: null, nextBillingDate: '2026-02-20', businessType: 'Japanese' },
+  { id: 'demo-merchant-004', businessName: 'Pizza Hub Central', phone: '+1-555-0400', address: '321 Elm St, Metro', currency: 'EUR', timezone: 'Europe/London', status: 'active', planName: 'Enterprise', planPrice: 99, branchCount: 12, userCount: 45, createdAt: '2024-11-10', subscriptionStatus: 'active' as const, trialEnd: null, nextBillingDate: '2026-03-01', businessType: 'Pizza Chain' },
 ];
 
 export const DEMO_ADMIN_USERS = [
@@ -240,4 +240,60 @@ export const DEMO_ADMIN_REVENUE = {
     { month: 'Jan', revenue: 1380 },
     { month: 'Feb', revenue: 1452 },
   ],
+};
+
+// Merchant branches for admin detail view
+export const DEMO_MERCHANT_BRANCHES: Record<string, Array<{ id: string; name: string; address: string; phone: string; status: string; createdAt: string }>> = {
+  'demo-merchant-001': [
+    { id: 'br-001', name: 'Main Branch', address: '123 Main Street, City', phone: '+1-555-0101', status: 'active', createdAt: '2025-06-15' },
+    { id: 'br-002', name: 'Downtown Branch', address: '456 Downtown Ave, City', phone: '+1-555-0102', status: 'active', createdAt: '2025-09-01' },
+  ],
+  'demo-merchant-002': [
+    { id: 'br-003', name: 'Main', address: '456 Oak Avenue, Town', phone: '+1-555-0201', status: 'active', createdAt: '2025-09-01' },
+  ],
+  'demo-merchant-003': [
+    { id: 'br-004', name: 'Downtown', address: '789 Pine Blvd, Village', phone: '+1-555-0301', status: 'active', createdAt: '2025-04-20' },
+    { id: 'br-005', name: 'Midtown', address: '101 Midtown Rd, Village', phone: '+1-555-0302', status: 'active', createdAt: '2025-07-10' },
+    { id: 'br-006', name: 'Airport', address: '999 Airport Terminal 2', phone: '+1-555-0303', status: 'inactive', createdAt: '2025-10-01' },
+  ],
+  'demo-merchant-004': [
+    { id: 'br-007', name: 'HQ', address: '321 Elm St, Metro', phone: '+44-20-7946-0001', status: 'active', createdAt: '2024-11-10' },
+    { id: 'br-008', name: 'East London', address: '15 Brick Lane, London', phone: '+44-20-7946-0002', status: 'active', createdAt: '2025-01-15' },
+    { id: 'br-009', name: 'Manchester', address: '42 Deansgate, Manchester', phone: '+44-161-000-0001', status: 'active', createdAt: '2025-03-20' },
+  ],
+};
+
+// Recent orders summary per merchant
+export const DEMO_MERCHANT_ORDERS: Record<string, Array<{ id: string; orderNumber: string; total: number; status: string; date: string }>> = {
+  'demo-merchant-001': [
+    { id: 'mo-001', orderNumber: 'ORD-1001', total: 20.86, status: 'completed', date: '2026-02-26T10:30:00Z' },
+    { id: 'mo-002', orderNumber: 'ORD-1002', total: 8.67, status: 'completed', date: '2026-02-26T11:15:00Z' },
+    { id: 'mo-003', orderNumber: 'ORD-1003', total: 12.75, status: 'pending', date: '2026-02-26T12:00:00Z' },
+    { id: 'mo-004', orderNumber: 'ORD-1004', total: 23.17, status: 'completed', date: '2026-02-25T14:30:00Z' },
+    { id: 'mo-005', orderNumber: 'ORD-1005', total: 6.95, status: 'voided', date: '2026-02-25T16:00:00Z' },
+  ],
+  'demo-merchant-002': [
+    { id: 'mo-006', orderNumber: 'BP-501', total: 15.49, status: 'completed', date: '2026-02-26T09:00:00Z' },
+    { id: 'mo-007', orderNumber: 'BP-502', total: 22.30, status: 'completed', date: '2026-02-26T10:20:00Z' },
+  ],
+  'demo-merchant-003': [],
+  'demo-merchant-004': [
+    { id: 'mo-008', orderNumber: 'PH-2001', total: 45.80, status: 'completed', date: '2026-02-26T08:00:00Z' },
+    { id: 'mo-009', orderNumber: 'PH-2002', total: 89.20, status: 'completed', date: '2026-02-26T09:30:00Z' },
+    { id: 'mo-010', orderNumber: 'PH-2003', total: 32.50, status: 'pending', date: '2026-02-26T11:00:00Z' },
+  ],
+};
+
+// Admin notes per merchant
+export const DEMO_MERCHANT_NOTES: Record<string, Array<{ id: string; text: string; author: string; createdAt: string }>> = {
+  'demo-merchant-001': [
+    { id: 'note-001', text: 'VIP merchant — early adopter. Upgraded from Starter to Pro in Dec 2025.', author: 'Platform Admin', createdAt: '2026-01-15T10:00:00Z' },
+  ],
+  'demo-merchant-002': [
+    { id: 'note-002', text: 'Trial started Feb 24. Follow up before trial ends on Mar 10.', author: 'Platform Admin', createdAt: '2026-02-25T14:00:00Z' },
+  ],
+  'demo-merchant-003': [
+    { id: 'note-003', text: 'Suspended due to payment failure. Contacted via email on Feb 21.', author: 'Support Admin', createdAt: '2026-02-21T09:00:00Z' },
+  ],
+  'demo-merchant-004': [],
 };

@@ -1,14 +1,30 @@
 import axios from 'axios';
-import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_BRANCHES, DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_TABLES, DEMO_ORDERS, DEMO_CUSTOMERS, DEMO_SHIFTS, DEMO_SHIFT_HISTORY, DEMO_NOTIFICATIONS, DEMO_INVENTORY_LOGS, DEMO_USERS, DEMO_AUDIT_LOGS, DEMO_WEEKLY_SALES, DEMO_PAYMENT_BREAKDOWN, DEMO_ORDER_TYPES, DEMO_TOP_PRODUCTS, DEMO_DAILY_REPORT, DEMO_MERCHANT, DEMO_MODIFIER_GROUPS, DEMO_BILLING_PLANS, DEMO_BILLING_SUBSCRIPTION, DEMO_INVOICES, DEMO_ADMIN_USERS, DEMO_ADMIN_PAYMENTS, DEMO_ADMIN_REVENUE, DEMO_MERCHANTS } from './demo-data';
+import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_BRANCHES, DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_TABLES, DEMO_ORDERS, DEMO_CUSTOMERS, DEMO_SHIFTS, DEMO_SHIFT_HISTORY, DEMO_NOTIFICATIONS, DEMO_INVENTORY_LOGS, DEMO_USERS, DEMO_AUDIT_LOGS, DEMO_WEEKLY_SALES, DEMO_PAYMENT_BREAKDOWN, DEMO_ORDER_TYPES, DEMO_TOP_PRODUCTS, DEMO_DAILY_REPORT, DEMO_MERCHANT, DEMO_MODIFIER_GROUPS, DEMO_BILLING_PLANS, DEMO_BILLING_SUBSCRIPTION, DEMO_INVOICES, DEMO_ADMIN_USERS, DEMO_ADMIN_PAYMENTS, DEMO_ADMIN_REVENUE, DEMO_MERCHANTS, DEMO_MERCHANT_BRANCHES, DEMO_MERCHANT_ORDERS, DEMO_MERCHANT_NOTES } from './demo-data';
 
 const API_URL = 'http://localhost:3000/api/v1';
 
-function getDemoData(method: string, url: string): any {
+function getDemoData(method: string, url: string, body?: any): any {
   const u = url;
 
   // Auth
   if (u === '/auth/login') return { accessToken: DEMO_TOKEN, user: DEMO_USER };
-  if (u === '/auth/register') return { accessToken: DEMO_TOKEN, user: DEMO_USER };
+  if (u === '/auth/register') {
+    const regId = 'reg-' + Date.now();
+    const newUser = {
+      id: regId,
+      email: body?.email || 'new@cloudpos.com',
+      firstName: body?.firstName || 'New',
+      lastName: body?.lastName || 'User',
+      role: 'root_owner' as const,
+      merchantId: 'merch-' + regId,
+      branchId: null,
+    };
+    return {
+      accessToken: 'token-' + regId,
+      user: newUser,
+      subscription: { planId: 'plan-starter', planName: 'Starter', status: 'trialing', trialEnd: new Date(Date.now() + 14 * 86400000).toISOString() },
+    };
+  }
   if (u === '/auth/me') return DEMO_USER;
   if (u === '/auth/change-password') return { message: 'Password changed' };
   if (u === '/auth/forgot-password') return { message: 'Email sent' };
@@ -76,6 +92,11 @@ function getDemoData(method: string, url: string): any {
   // Admin (must be before generic /users and /merchants patterns)
   if (u === '/admin/dashboard') return { totalMerchants: DEMO_MERCHANTS.length, activeSubscriptions: DEMO_MERCHANTS.filter(m => m.status === 'active').length, totalRevenue: DEMO_ADMIN_REVENUE.totalRevenue, mrr: DEMO_ADMIN_REVENUE.mrr };
   if (u === '/admin/merchants' && method === 'get') return DEMO_MERCHANTS;
+  if (/^\/admin\/merchants\/[^/]+\/branches$/.test(u)) { const mid = u.split('/')[3]; return DEMO_MERCHANT_BRANCHES[mid] || []; }
+  if (/^\/admin\/merchants\/[^/]+\/orders$/.test(u)) { const mid = u.split('/')[3]; return DEMO_MERCHANT_ORDERS[mid] || []; }
+  if (/^\/admin\/merchants\/[^/]+\/notes$/.test(u) && method === 'get') { const mid = u.split('/')[3]; return DEMO_MERCHANT_NOTES[mid] || []; }
+  if (/^\/admin\/merchants\/[^/]+\/notes$/.test(u) && method === 'post') return { id: 'note-' + Date.now(), message: 'Note added' };
+  if (/^\/admin\/merchants\/[^/]+\/plan$/.test(u)) return { message: 'Plan updated' };
   if (/^\/admin\/merchants\/[^/]+$/.test(u)) return DEMO_MERCHANTS.find(m => u.includes(m.id)) || DEMO_MERCHANTS[0];
   if (u === '/admin/users') return DEMO_ADMIN_USERS;
   if (u === '/admin/payments') return DEMO_ADMIN_PAYMENTS;
@@ -104,15 +125,15 @@ function getDemoData(method: string, url: string): any {
 
 // Create a mock adapter for demo mode
 function createDemoApi() {
-  const mockRes = (url: string, method: string) => {
-    const data = getDemoData(method, url);
+  const mockRes = (url: string, method: string, body?: any) => {
+    const data = getDemoData(method, url, body);
     return Promise.resolve({ data, status: 200, statusText: 'OK', headers: {}, config: {} });
   };
   const instance = {
     get: (url: string, _config?: any) => mockRes(url, 'get'),
-    post: (url: string, _data?: any, _config?: any) => mockRes(url, 'post'),
-    patch: (url: string, _data?: any, _config?: any) => mockRes(url, 'patch'),
-    put: (url: string, _data?: any, _config?: any) => mockRes(url, 'put'),
+    post: (url: string, _data?: any, _config?: any) => mockRes(url, 'post', _data),
+    patch: (url: string, _data?: any, _config?: any) => mockRes(url, 'patch', _data),
+    put: (url: string, _data?: any, _config?: any) => mockRes(url, 'put', _data),
     delete: (url: string, _config?: any) => mockRes(url, 'delete'),
   };
   return instance as any;

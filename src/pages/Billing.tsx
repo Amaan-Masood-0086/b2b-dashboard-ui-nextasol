@@ -99,12 +99,35 @@ export default function BillingPage() {
     },
   ];
 
+  const isTrialing = subscription?.status === 'trialing';
+  const trialDaysLeft = isTrialing && subscription?.currentPeriodEnd
+    ? Math.max(0, Math.ceil((new Date(subscription.currentPeriodEnd).getTime() - Date.now()) / 86400000))
+    : 0;
+
   return (
     <div className="p-6 space-y-6 max-w-5xl">
       <div>
         <h1 className="text-2xl font-bold">Billing & Subscription</h1>
         <p className="text-muted-foreground text-sm mt-1">Manage your plan, usage limits, and invoices</p>
       </div>
+
+      {/* Trial Banner */}
+      {isTrialing && (
+        <Card className="border-warning/50 bg-warning/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 flex-wrap">
+              <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold">Free Trial — {trialDaysLeft} days remaining</p>
+                <p className="text-sm text-muted-foreground">Your Starter trial ends on {new Date(subscription!.currentPeriodEnd).toLocaleDateString()}. Upgrade to keep all features.</p>
+              </div>
+              <Button size="sm" onClick={() => document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' })}>
+                Upgrade Now
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="plan" className="space-y-6">
         <TabsList>
@@ -177,7 +200,7 @@ export default function BillingPage() {
           <Separator />
 
           {/* Plan tiers */}
-          <div>
+          <div id="plans-section">
             <h2 className="text-lg font-semibold mb-3">Available Plans</h2>
             <div className="grid gap-4 md:grid-cols-3">
               {(plans ?? []).map((plan) => {

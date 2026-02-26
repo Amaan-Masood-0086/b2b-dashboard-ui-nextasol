@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { Loader2, Mail, RotateCw } from 'lucide-react';
+import { Loader2, Mail, RotateCw, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/hooks/use-theme';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [code, setCode] = useState('');
   const [cooldown, setCooldown] = useState(60);
 
@@ -47,7 +49,10 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 relative">
+      <Button variant="ghost" size="icon" className="absolute top-4 right-4" onClick={toggleTheme} aria-label="Toggle theme">
+        {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </Button>
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
