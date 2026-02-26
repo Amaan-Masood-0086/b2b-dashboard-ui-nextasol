@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { LiveOrderTicker } from '@/components/LiveOrderTicker';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Minus, Trash2, ShoppingBag, X, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ShoppingBag, X, PanelRightOpen, PanelRightClose, Pause, Play, MapPin } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore, CartModifier } from '@/stores/cart-store';
@@ -20,6 +20,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+
+function isMembershipValid(membership: Membership): boolean {
+  const now = new Date();
+  if (membership.validFrom && new Date(membership.validFrom) > now) return false;
+  if (membership.validUntil && new Date(membership.validUntil) < now) return false;
+  return true;
+}
 
 export default function POSPage() {
   const { selectedBranchId } = useAuthStore();
@@ -36,8 +44,11 @@ export default function POSPage() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'split'>('cash');
   const [amountReceived, setAmountReceived] = useState('');
+  const [splitCash, setSplitCash] = useState('');
+  const [splitCard, setSplitCard] = useState('');
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
+  const [heldOrdersOpen, setHeldOrdersOpen] = useState(false);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -59,7 +70,7 @@ export default function POSPage() {
       if (isInput) return;
       if (e.key === 'Enter' && cart.items.length > 0 && !checkoutOpen && !modifierProduct) {
         e.preventDefault();
-        setCheckoutOpen(true);
+        if (currentShift) setCheckoutOpen(true);
       }
       if (e.key === 'Delete' && cart.items.length > 0 && !checkoutOpen) {
         if (confirm('Clear cart?')) cart.clearCart();
@@ -99,6 +110,19 @@ export default function POSPage() {
     queryFn: () => api.get(`/branches/${branchId}/shifts/current`).then((r) => r.data).catch(() => null),
     enabled: !!branchId,
   });
+
+  const { data: branchData } = useQuery({
+    queryKey: ['branch-detail', branchId],
+    queryFn: () => api.get(`/branches/${branchId}`).then((r) => r.data),
+    enabled: !!branchId,
+  });
+
+  // Set tax rate from branch
+  useEffect(() => {
+    if (branchData?.taxRate != null) {
+      cart.setTaxRate(branchData.taxRate);
+    }
+  }, [branchData?.taxRate]);
 
   const createOrder = useMutation({
     mutationFn: (data: any) => api.post(`/branches/${branchId}/orders`, data),
@@ -154,8 +178,16 @@ export default function POSPage() {
     });
   };
 
+  // Get selected customer info for receipt
+  const selectedCustomer = cart.customerId ? customerList.find(c => c.id === cart.customerId) : null;
+  const activeMembership = selectedCustomer?.membership?.isActive && isMembershipValid(selectedCustomer.membership) ? selectedCustomer.membership : null;
+
   const handleCheckout = async () => {
     if (cart.items.length === 0) return;
+    if (!currentShift) {
+      toast.error('Please open a shift first');
+      return;
+    }
 
     try {
       const orderData = {
@@ -171,36 +203,48 @@ export default function POSPage() {
         discountAmount: cart.discountAmount || undefined,
         notes: cart.notes || undefined,
         customerId: cart.customerId || undefined,
+        deliveryAddress: cart.orderType === 'delivery' ? cart.deliveryAddress || undefined : undefined,
       };
 
       const orderRes: any = await createOrder.mutateAsync(orderData);
       const orderId = orderRes.data.id;
       const orderNumber = orderRes.data.orderNumber;
 
-      await checkoutOrder.mutateAsync({
-        orderId,
-        data: {
-          paymentMethod,
-          amountReceived: paymentMethod === 'cash' ? parseFloat(amountReceived) : undefined,
-        },
-      });
+      const checkoutData: any = {
+        paymentMethod,
+        amountReceived: paymentMethod === 'cash' ? parseFloat(amountReceived) : undefined,
+      };
+      if (paymentMethod === 'split') {
+        checkoutData.splitCash = parseFloat(splitCash) || 0;
+        checkoutData.splitCard = parseFloat(splitCard) || 0;
+      }
+
+      await checkoutOrder.mutateAsync({ orderId, data: checkoutData });
 
       const receiptInfo = {
         orderNumber,
         items: [...cart.items],
         subtotal,
         discount,
+        tax,
         total,
         paymentMethod,
         amountReceived: paymentMethod === 'cash' ? parseFloat(amountReceived) : undefined,
         change: paymentMethod === 'cash' ? parseFloat(amountReceived) - total : undefined,
         orderType: cart.orderType,
+        customerName: selectedCustomer?.name,
+        membershipName: activeMembership?.name,
+        membershipBenefit: activeMembership ? `${activeMembership.benefitValue}${activeMembership.benefitType === 'percentage_discount' ? '%' : ''} off` : undefined,
+        orderNotes: cart.notes || undefined,
+        splitPayment: paymentMethod === 'split' ? { cashAmount: parseFloat(splitCash) || 0, cardAmount: parseFloat(splitCard) || 0 } : undefined,
       };
 
       toast.success(`Order #${orderNumber} completed!`);
       cart.clearCart();
       setCheckoutOpen(false);
       setAmountReceived('');
+      setSplitCash('');
+      setSplitCard('');
       setReceiptData(receiptInfo);
       setReceiptOpen(true);
       queryClient.invalidateQueries({ queryKey: ['products', branchId] });
@@ -215,8 +259,17 @@ export default function POSPage() {
 
   const subtotal = cart.getSubtotal();
   const discount = cart.getDiscountValue();
+  const tax = cart.getTax();
   const total = cart.getTotal();
   const change = paymentMethod === 'cash' && amountReceived ? parseFloat(amountReceived) - total : 0;
+
+  // Quick cash buttons
+  const quickCashAmounts = [
+    { label: 'Exact', value: total },
+    { label: Math.ceil(total / 10) * 10, value: Math.ceil(total / 10) * 10 },
+    { label: Math.ceil(total / 50) * 50, value: Math.ceil(total / 50) * 50 },
+    { label: Math.ceil(total / 100) * 100, value: Math.ceil(total / 100) * 100 },
+  ].filter((v, i, a) => a.findIndex(x => x.value === v.value) === i);
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)]">
@@ -230,7 +283,10 @@ export default function POSPage() {
           {currentShift ? (
             <Badge variant="outline" className="bg-success/10 text-success border-success/30">Open</Badge>
           ) : (
-            <Badge variant="outline" className="text-muted-foreground">No active shift</Badge>
+            <Badge variant="outline" className="text-destructive border-destructive/30">No active shift</Badge>
+          )}
+          {branchData?.taxRate > 0 && (
+            <span className="ml-auto text-xs text-muted-foreground">Tax: {branchData.taxRate}%</span>
           )}
         </div>
 
@@ -304,7 +360,17 @@ export default function POSPage() {
             </h3>
             <div className="flex items-center gap-1">
               {cart.items.length > 0 && (
-                <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={cart.clearCart}>Clear</Button>
+                <>
+                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => { cart.holdOrder(); toast.success('Order held'); }}>
+                    <Pause className="h-3 w-3 mr-1" /> Hold
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={cart.clearCart}>Clear</Button>
+                </>
+              )}
+              {cart.heldOrders.length > 0 && (
+                <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => setHeldOrdersOpen(true)}>
+                  <Play className="h-3 w-3 mr-1" /> Held ({cart.heldOrders.length})
+                </Button>
               )}
               <Button variant="ghost" size="icon" className="h-7 w-7 md:hidden" onClick={() => setCartOpen(false)}>
                 <X className="h-4 w-4" />
@@ -333,19 +399,36 @@ export default function POSPage() {
             </Select>
           )}
 
+          {cart.orderType === 'delivery' && (
+            <div className="mt-2 relative">
+              <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                className="h-8 text-xs pl-8"
+                placeholder="Delivery address..."
+                value={cart.deliveryAddress}
+                onChange={(e) => cart.setDeliveryAddress(e.target.value)}
+              />
+            </div>
+          )}
+
           <Select value={cart.customerId || 'none'} onValueChange={(v) => {
             const id = v === 'none' ? null : v;
             cart.setCustomerId(id);
-            // Auto-apply membership discount
+            // Auto-apply membership discount with expiry validation
             if (id) {
               const customer = customerList.find(c => c.id === id);
               if (customer?.membership?.isActive) {
                 const m = customer.membership;
-                if (m.benefitType === 'percentage_discount') {
+                if (!isMembershipValid(m)) {
+                  toast.warning(`${m.name} membership has expired`);
+                  cart.setDiscount(null, 0);
+                } else if (m.benefitType === 'percentage_discount') {
                   cart.setDiscount('percentage', m.benefitValue);
                 } else if (m.benefitType === 'fixed_discount') {
                   cart.setDiscount('fixed', m.benefitValue);
                 }
+              } else {
+                cart.setDiscount(null, 0);
               }
             } else {
               cart.setDiscount(null, 0);
@@ -364,10 +447,19 @@ export default function POSPage() {
               ))}
             </SelectContent>
           </Select>
-          {/* Show membership badge if customer has one */}
+          {/* Show membership badge if customer has valid one */}
           {cart.customerId && (() => {
             const cust = customerList.find(c => c.id === cart.customerId);
             if (!cust?.membership?.isActive) return null;
+            const valid = isMembershipValid(cust.membership);
+            if (!valid) {
+              return (
+                <div className="mt-1.5 rounded border border-destructive/30 bg-destructive/5 px-2 py-1 text-[11px] text-destructive flex items-center gap-1">
+                  <span className="font-medium">{cust.membership.name}</span>
+                  <span>— Expired</span>
+                </div>
+              );
+            }
             return (
               <div className="mt-1.5 rounded border border-primary/30 bg-primary/5 px-2 py-1 text-[11px] text-primary flex items-center gap-1">
                 <span className="font-medium">{cust.membership.name}</span>
@@ -440,11 +532,19 @@ export default function POSPage() {
             <div className="space-y-1 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
               {discount > 0 && <div className="flex justify-between text-destructive"><span>Discount</span><span>-{formatCurrency(discount)}</span></div>}
+              {tax > 0 && <div className="flex justify-between text-muted-foreground"><span>Tax ({cart.taxRate}%)</span><span>{formatCurrency(tax)}</span></div>}
               <div className="flex justify-between font-bold text-base"><span>Total</span><span>{formatCurrency(total)}</span></div>
             </div>
-            <Button className="w-full" onClick={() => setCheckoutOpen(true)}>
-              Checkout · {formatCurrency(total)}
-            </Button>
+            {!currentShift ? (
+              <div className="text-center">
+                <p className="text-xs text-destructive mb-2">⚠ Please open a shift to checkout</p>
+                <Button className="w-full" disabled>Checkout · {formatCurrency(total)}</Button>
+              </div>
+            ) : (
+              <Button className="w-full" onClick={() => setCheckoutOpen(true)}>
+                Checkout · {formatCurrency(total)}
+              </Button>
+            )}
             <p className="text-[10px] text-muted-foreground text-center">Press Enter to checkout</p>
           </div>
         )}
@@ -503,9 +603,39 @@ export default function POSPage() {
             {paymentMethod === 'cash' && (
               <div className="space-y-2">
                 <Label>Amount Received</Label>
+                <div className="flex gap-2 flex-wrap">
+                  {quickCashAmounts.map((q) => (
+                    <Button key={q.value} variant="outline" size="sm" className="text-xs" onClick={() => setAmountReceived(q.value.toString())}>
+                      {q.label === 'Exact' ? 'Exact' : formatCurrency(q.value)}
+                    </Button>
+                  ))}
+                </div>
                 <Input type="number" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)} placeholder="0.00" />
                 {parseFloat(amountReceived) >= total && (
                   <p className="text-sm font-medium text-success">Change: {formatCurrency(change)}</p>
+                )}
+              </div>
+            )}
+            {paymentMethod === 'split' && (
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Cash Amount</Label>
+                  <Input type="number" value={splitCash} onChange={(e) => {
+                    setSplitCash(e.target.value);
+                    const remaining = total - (parseFloat(e.target.value) || 0);
+                    setSplitCard(remaining > 0 ? remaining.toFixed(2) : '0');
+                  }} placeholder="0.00" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Card Amount</Label>
+                  <Input type="number" value={splitCard} onChange={(e) => {
+                    setSplitCard(e.target.value);
+                    const remaining = total - (parseFloat(e.target.value) || 0);
+                    setSplitCash(remaining > 0 ? remaining.toFixed(2) : '0');
+                  }} placeholder="0.00" />
+                </div>
+                {(parseFloat(splitCash) || 0) + (parseFloat(splitCard) || 0) >= total && (
+                  <p className="text-xs text-success">✓ Amount covers total</p>
                 )}
               </div>
             )}
@@ -514,11 +644,51 @@ export default function POSPage() {
             <Button variant="outline" onClick={() => setCheckoutOpen(false)}>Cancel</Button>
             <Button
               onClick={handleCheckout}
-              disabled={createOrder.isPending || checkoutOrder.isPending || (paymentMethod === 'cash' && parseFloat(amountReceived) < total)}
+              disabled={
+                createOrder.isPending || checkoutOrder.isPending ||
+                (paymentMethod === 'cash' && parseFloat(amountReceived) < total) ||
+                (paymentMethod === 'split' && ((parseFloat(splitCash) || 0) + (parseFloat(splitCard) || 0)) < total)
+              }
             >
               Complete Payment
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Held orders dialog */}
+      <Dialog open={heldOrdersOpen} onOpenChange={setHeldOrdersOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Held Orders ({cart.heldOrders.length})</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            {cart.heldOrders.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No held orders</p>
+            ) : (
+              cart.heldOrders.map((held) => (
+                <div key={held.id} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{held.label}</p>
+                      <p className="text-xs text-muted-foreground">{held.items.length} items · {format(new Date(held.heldAt), 'HH:mm')}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="sm" onClick={() => { cart.recallOrder(held.id); setHeldOrdersOpen(false); toast.success('Order recalled'); }}>
+                        Recall
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => cart.removeHeldOrder(held.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {held.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -528,7 +698,7 @@ export default function POSPage() {
         onOpenChange={setReceiptOpen}
         receipt={receiptData}
         businessName="CloudPOS Demo Restaurant"
-        branchName="Main Branch"
+        branchName={branchData?.name || 'Main Branch'}
       />
 
       {/* Keyboard shortcuts help */}

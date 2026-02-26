@@ -19,6 +19,19 @@ export interface CartItem {
   imageUrl?: string;
 }
 
+export interface HeldOrder {
+  id: string;
+  label: string;
+  items: CartItem[];
+  orderType: 'dine_in' | 'takeaway' | 'delivery';
+  tableId: string | null;
+  customerId: string | null;
+  discountType: 'percentage' | 'fixed' | null;
+  discountAmount: number;
+  notes: string;
+  heldAt: string;
+}
+
 interface CartState {
   items: CartItem[];
   orderType: 'dine_in' | 'takeaway' | 'delivery';
@@ -27,6 +40,9 @@ interface CartState {
   discountType: 'percentage' | 'fixed' | null;
   discountAmount: number;
   notes: string;
+  taxRate: number;
+  heldOrders: HeldOrder[];
+  deliveryAddress: string;
 
   addItem: (item: Omit<CartItem, 'id'>) => void;
   removeItem: (id: string) => void;
@@ -37,13 +53,22 @@ interface CartState {
   setCustomerId: (id: string | null) => void;
   setDiscount: (type: 'percentage' | 'fixed' | null, amount: number) => void;
   setNotes: (notes: string) => void;
+  setTaxRate: (rate: number) => void;
+  setDeliveryAddress: (address: string) => void;
   clearCart: () => void;
   getSubtotal: () => number;
   getDiscountValue: () => number;
+  getTax: () => number;
   getTotal: () => number;
+
+  // Held orders
+  holdOrder: (label?: string) => void;
+  recallOrder: (id: string) => void;
+  removeHeldOrder: (id: string) => void;
 }
 
 let itemCounter = 0;
+let heldCounter = 0;
 
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
@@ -53,6 +78,9 @@ export const useCartStore = create<CartState>((set, get) => ({
   discountType: null,
   discountAmount: 0,
   notes: '',
+  taxRate: 0,
+  heldOrders: [],
+  deliveryAddress: '',
 
   addItem: (item) => {
     const id = `cart-${++itemCounter}`;
@@ -76,6 +104,8 @@ export const useCartStore = create<CartState>((set, get) => ({
   setCustomerId: (customerId) => set({ customerId }),
   setDiscount: (discountType, discountAmount) => set({ discountType, discountAmount }),
   setNotes: (notes) => set({ notes }),
+  setTaxRate: (taxRate) => set({ taxRate }),
+  setDeliveryAddress: (deliveryAddress) => set({ deliveryAddress }),
 
   clearCart: () =>
     set({
@@ -86,6 +116,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       discountType: null,
       discountAmount: 0,
       notes: '',
+      deliveryAddress: '',
     }),
 
   getSubtotal: () => {
@@ -103,7 +134,61 @@ export const useCartStore = create<CartState>((set, get) => ({
     return discountAmount;
   },
 
-  getTotal: () => {
-    return get().getSubtotal() - get().getDiscountValue();
+  getTax: () => {
+    const subtotal = get().getSubtotal();
+    const discountValue = get().getDiscountValue();
+    const taxableAmount = subtotal - discountValue;
+    return (taxableAmount * get().taxRate) / 100;
   },
+
+  getTotal: () => {
+    return get().getSubtotal() - get().getDiscountValue() + get().getTax();
+  },
+
+  holdOrder: (label) => {
+    const s = get();
+    if (s.items.length === 0) return;
+    const id = `held-${++heldCounter}`;
+    const held: HeldOrder = {
+      id,
+      label: label || `Order #${heldCounter}`,
+      items: [...s.items],
+      orderType: s.orderType,
+      tableId: s.tableId,
+      customerId: s.customerId,
+      discountType: s.discountType,
+      discountAmount: s.discountAmount,
+      notes: s.notes,
+      heldAt: new Date().toISOString(),
+    };
+    set((prev) => ({
+      heldOrders: [...prev.heldOrders, held],
+      items: [],
+      orderType: 'dine_in',
+      tableId: null,
+      customerId: null,
+      discountType: null,
+      discountAmount: 0,
+      notes: '',
+      deliveryAddress: '',
+    }));
+  },
+
+  recallOrder: (id) => {
+    const held = get().heldOrders.find((h) => h.id === id);
+    if (!held) return;
+    set((prev) => ({
+      items: held.items,
+      orderType: held.orderType,
+      tableId: held.tableId,
+      customerId: held.customerId,
+      discountType: held.discountType,
+      discountAmount: held.discountAmount,
+      notes: held.notes,
+      heldOrders: prev.heldOrders.filter((h) => h.id !== id),
+    }));
+  },
+
+  removeHeldOrder: (id) =>
+    set((prev) => ({ heldOrders: prev.heldOrders.filter((h) => h.id !== id) })),
 }));
