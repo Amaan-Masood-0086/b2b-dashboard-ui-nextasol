@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Clock, ChefHat, CheckCircle2, Timer, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Clock, ChefHat, CheckCircle2, Timer, AlertTriangle, RefreshCw, Volume2, VolumeX } from 'lucide-react';
 import api from '@/lib/api';
+import { useSound } from '@/hooks/use-sound';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,15 @@ const STATUS_CONFIG: Record<KDSStatus, { label: string; color: string; icon: Rea
 export default function KitchenPage() {
   const [orders, setOrders] = useState<KDSOrder[]>([]);
   const [filter, setFilter] = useState<KDSStatus | 'all'>('all');
+  const { playChime, isSoundEnabled, setSoundEnabled } = useSound();
+  const [muted, setMuted] = useState(!isSoundEnabled());
+  const prevCountRef = useRef(0);
+
+  const toggleMute = () => {
+    const newMuted = !muted;
+    setMuted(newMuted);
+    setSoundEnabled(!newMuted);
+  };
 
   const { data, refetch } = useQuery({
     queryKey: ['kds-orders'],
@@ -66,10 +76,14 @@ export default function KitchenPage() {
         createdAt: new Date().toISOString(),
         kdsStatus: 'new',
       };
-      setOrders((prev) => [newOrder, ...prev].slice(0, 20));
+      setOrders((prev) => {
+        const next = [newOrder, ...prev].slice(0, 20);
+        return next;
+      });
+      playChime();
     }, 20000);
     return () => clearInterval(interval);
-  }, []);
+  }, [playChime]);
 
   const updateStatus = useCallback((id: string, status: KDSStatus) => {
     setOrders((prev) => prev.map((o) => o.id === id ? { ...o, kdsStatus: status } : o));
@@ -95,9 +109,14 @@ export default function KitchenPage() {
             <p className="text-sm text-muted-foreground">Real-time order queue for kitchen staff</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={toggleMute} title={muted ? 'Unmute' : 'Mute'}>
+            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Status filters */}
@@ -123,7 +142,7 @@ export default function KitchenPage() {
           <p className="text-sm">New orders will appear here automatically</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 [&_button]:min-h-[44px]">
           {filtered.map((order) => {
             const cfg = STATUS_CONFIG[order.kdsStatus];
             const StatusIcon = cfg.icon;

@@ -118,7 +118,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 [&_button]:min-h-[44px]">
           {quickActions.map((action) => (
             <Card
               key={action.label}

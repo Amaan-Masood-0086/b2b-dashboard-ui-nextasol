@@ -1,15 +1,18 @@
+import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Volume2, VolumeX } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
+import { useSound } from '@/hooks/use-sound';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
 const pwSchema = z.object({ currentPassword: z.string().min(1), newPassword: z.string().min(8) });
@@ -31,6 +34,8 @@ export default function SettingsPage() {
   });
 
   const { register: regPw, handleSubmit: submitPw, formState: { errors: pwErrors }, reset: resetPw } = useForm({ resolver: zodResolver(pwSchema) });
+  const { isSoundEnabled, setSoundEnabled, playChime } = useSound();
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   const changePw = useMutation({
     mutationFn: (data: any) => api.patch('/auth/change-password', data),
@@ -61,6 +66,22 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Sound Notifications</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Enable sound alerts</Label>
+              <p className="text-xs text-muted-foreground">Play sounds for new orders and low stock alerts</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {soundOn ? <Volume2 className="h-4 w-4 text-muted-foreground" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
+              <Switch checked={soundOn} onCheckedChange={(v) => { setSoundOn(v); setSoundEnabled(v); if (v) playChime(); }} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Change Password</CardTitle></CardHeader>
