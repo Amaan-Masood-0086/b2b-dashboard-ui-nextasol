@@ -1,44 +1,53 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { DollarSign, ShoppingCart, TrendingUp, UtensilsCrossed } from 'lucide-react';
+import { format } from 'date-fns';
+import { DollarSign, ShoppingCart, TrendingUp, CalendarIcon } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const COLORS = ['hsl(220,70%,50%)', 'hsl(160,60%,45%)', 'hsl(30,80%,55%)', 'hsl(280,65%,60%)', 'hsl(340,75%,55%)'];
 
 export default function DashboardPage() {
   const { selectedBranchId } = useAuthStore();
   const branchId = selectedBranchId;
+  const [date, setDate] = useState<Date>(new Date());
+
+  const dateParam = format(date, 'yyyy-MM-dd');
 
   const { data: daily, isLoading: loadingDaily } = useQuery({
-    queryKey: ['reports-daily', branchId],
-    queryFn: () => api.get(`/branches/${branchId}/reports/daily`).then((r) => r.data),
+    queryKey: ['reports-daily', branchId, dateParam],
+    queryFn: () => api.get(`/branches/${branchId}/reports/daily`, { params: { date: dateParam } }).then((r) => r.data),
     enabled: !!branchId,
   });
 
   const { data: weeklySales, isLoading: loadingWeekly } = useQuery({
-    queryKey: ['reports-weekly', branchId],
-    queryFn: () => api.get(`/branches/${branchId}/reports/weekly-sales`).then((r) => r.data),
+    queryKey: ['reports-weekly', branchId, dateParam],
+    queryFn: () => api.get(`/branches/${branchId}/reports/weekly-sales`, { params: { date: dateParam } }).then((r) => r.data),
     enabled: !!branchId,
   });
 
   const { data: paymentBreakdown } = useQuery({
-    queryKey: ['reports-payment', branchId],
-    queryFn: () => api.get(`/branches/${branchId}/reports/payment-breakdown`).then((r) => r.data),
+    queryKey: ['reports-payment', branchId, dateParam],
+    queryFn: () => api.get(`/branches/${branchId}/reports/payment-breakdown`, { params: { date: dateParam } }).then((r) => r.data),
     enabled: !!branchId,
   });
 
   const { data: orderTypes } = useQuery({
-    queryKey: ['reports-order-types', branchId],
-    queryFn: () => api.get(`/branches/${branchId}/reports/order-types`).then((r) => r.data),
+    queryKey: ['reports-order-types', branchId, dateParam],
+    queryFn: () => api.get(`/branches/${branchId}/reports/order-types`, { params: { date: dateParam } }).then((r) => r.data),
     enabled: !!branchId,
   });
 
   const { data: topProducts } = useQuery({
-    queryKey: ['reports-top-products', branchId],
-    queryFn: () => api.get(`/branches/${branchId}/reports/top-products?limit=5`).then((r) => r.data),
+    queryKey: ['reports-top-products', branchId, dateParam],
+    queryFn: () => api.get(`/branches/${branchId}/reports/top-products?limit=5`, { params: { date: dateParam } }).then((r) => r.data),
     enabled: !!branchId,
   });
 
@@ -58,7 +67,27 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className={cn("justify-start text-left font-normal", !date && "text-muted-foreground")}>
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              {format(date, 'PPP')}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={(d) => d && setDate(d)}
+              disabled={(d) => d > new Date()}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         {stats.map((stat) => (
@@ -82,13 +111,9 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Weekly Sales Trend</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-base">Weekly Sales Trend</CardTitle></CardHeader>
           <CardContent>
-            {loadingWeekly ? (
-              <Skeleton className="h-[250px]" />
-            ) : (
+            {loadingWeekly ? <Skeleton className="h-[250px]" /> : (
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={weeklySales || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
@@ -103,24 +128,13 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Payment Breakdown</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-base">Payment Breakdown</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie
-                  data={paymentBreakdown || []}
-                  dataKey="total"
-                  nameKey="paymentMethod"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={({ paymentMethod, percent }) => `${paymentMethod} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {(paymentBreakdown || []).map((_: any, i: number) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
+                <Pie data={paymentBreakdown || []} dataKey="total" nameKey="paymentMethod" cx="50%" cy="50%" outerRadius={80}
+                  label={({ paymentMethod, percent }) => `${paymentMethod} ${(percent * 100).toFixed(0)}%`}>
+                  {(paymentBreakdown || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -129,24 +143,13 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Order Types</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-base">Order Types</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie
-                  data={orderTypes || []}
-                  dataKey="count"
-                  nameKey="orderType"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={({ orderType, percent }) => `${orderType?.replace('_', ' ')} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {(orderTypes || []).map((_: any, i: number) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
+                <Pie data={orderTypes || []} dataKey="count" nameKey="orderType" cx="50%" cy="50%" outerRadius={80}
+                  label={({ orderType, percent }) => `${orderType?.replace('_', ' ')} ${(percent * 100).toFixed(0)}%`}>
+                  {(orderTypes || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -155,9 +158,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Top Selling Products</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-base">Top Selling Products</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={topProducts || []} layout="vertical">

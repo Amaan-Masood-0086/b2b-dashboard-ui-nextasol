@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
@@ -67,14 +68,19 @@ export default function TablesPage() {
               <p className="font-bold text-lg">{table.tableNumber}</p>
               <p className="text-xs text-muted-foreground">Capacity: {table.capacity}</p>
               <Badge variant="outline" className={`capitalize ${statusColors[table.status] || ''}`}>{table.status}</Badge>
-              <div className="flex gap-1 justify-center mt-2">
-                {table.status !== 'available' && (
-                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => updateStatus.mutate({ id: table.id, status: 'available' })}>
-                    Set Available
-                  </Button>
-                )}
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(table.id)}>
-                  <Trash2 className="h-3.5 w-3.5" />
+              <div className="pt-2 space-y-2">
+                <Select value={table.status} onValueChange={(v) => updateStatus.mutate({ id: table.id, status: v })}>
+                  <SelectTrigger className="h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="available">Available</SelectItem>
+                    <SelectItem value="occupied">Occupied</SelectItem>
+                    <SelectItem value="reserved">Reserved</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="ghost" size="sm" className="w-full h-7 text-xs text-destructive" onClick={() => deleteMutation.mutate(table.id)}>
+                  <Trash2 className="h-3 w-3 mr-1" /> Delete
                 </Button>
               </div>
             </CardContent>
