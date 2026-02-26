@@ -66,6 +66,7 @@ const navSections: NavSection[] = [
   {
     label: 'System',
     items: [
+      { title: 'Billing', url: '/billing', icon: CreditCard, roles: ['root_owner'] },
       { title: 'Settings', url: '/settings', icon: Settings, roles: ['root_owner'] },
       { title: 'Audit Logs', url: '/audit-logs', icon: ScrollText, roles: ['root_owner'] },
     ],
