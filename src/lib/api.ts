@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_BRANCHES, DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_TABLES, DEMO_ORDERS, DEMO_CUSTOMERS, DEMO_SHIFTS, DEMO_SHIFT_HISTORY, DEMO_NOTIFICATIONS, DEMO_INVENTORY_LOGS, DEMO_USERS, DEMO_AUDIT_LOGS, DEMO_WEEKLY_SALES, DEMO_PAYMENT_BREAKDOWN, DEMO_ORDER_TYPES, DEMO_TOP_PRODUCTS, DEMO_DAILY_REPORT, DEMO_MERCHANT, DEMO_MODIFIER_GROUPS } from './demo-data';
+import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_BRANCHES, DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_TABLES, DEMO_ORDERS, DEMO_CUSTOMERS, DEMO_SHIFTS, DEMO_SHIFT_HISTORY, DEMO_NOTIFICATIONS, DEMO_INVENTORY_LOGS, DEMO_USERS, DEMO_AUDIT_LOGS, DEMO_WEEKLY_SALES, DEMO_PAYMENT_BREAKDOWN, DEMO_ORDER_TYPES, DEMO_TOP_PRODUCTS, DEMO_DAILY_REPORT, DEMO_MERCHANT, DEMO_MODIFIER_GROUPS, DEMO_BILLING_PLANS, DEMO_BILLING_SUBSCRIPTION, DEMO_INVOICES } from './demo-data';
 
 const API_URL = 'http://localhost:3000/api/v1';
 
@@ -80,6 +80,12 @@ function getDemoData(method: string, url: string): any {
 
   // Audit Logs
   if (u === '/audit-logs') return { data: DEMO_AUDIT_LOGS, total: DEMO_AUDIT_LOGS.length, page: 1, limit: 20, totalPages: 1 };
+
+  // Billing
+  if (u === '/billing/plans') return DEMO_BILLING_PLANS;
+  if (u === '/billing/subscription') return DEMO_BILLING_SUBSCRIPTION;
+  if (u === '/billing/invoices') return DEMO_INVOICES;
+  if (u === '/billing/upgrade') return { message: 'Upgraded' };
 
   // Admin
   if (u === '/admin/dashboard') return { totalMerchants: 24, activeSubscriptions: 18, totalRevenue: 12500 };

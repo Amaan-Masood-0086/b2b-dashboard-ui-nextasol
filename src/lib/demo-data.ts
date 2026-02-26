@@ -161,3 +161,27 @@ export const DEMO_MERCHANT = {
   currency: 'USD',
   timezone: 'America/New_York',
 };
+
+export const DEMO_BILLING_PLANS = [
+  { id: 'plan-starter', name: 'Starter', pricePerBranch: 19, maxBranches: 2, maxProducts: 50, maxUsers: 5, features: ['POS Terminal', 'Basic Reports', 'Email Support', 'Order Management'], popular: false },
+  { id: 'plan-pro', name: 'Pro', pricePerBranch: 49, maxBranches: 10, maxProducts: 500, maxUsers: 25, features: ['Everything in Starter', 'Advanced Reports', 'Inventory Management', 'Customer CRM', 'Priority Support'], popular: true },
+  { id: 'plan-enterprise', name: 'Enterprise', pricePerBranch: 99, maxBranches: null, maxProducts: null, maxUsers: null, features: ['Everything in Pro', 'Unlimited Everything', 'Dedicated Support', 'Custom Integrations', 'API Access', 'White-label Options'], popular: false },
+];
+
+export const DEMO_BILLING_SUBSCRIPTION = {
+  id: 'sub-001',
+  planId: 'plan-pro',
+  plan: DEMO_BILLING_PLANS[1],
+  status: 'active' as const,
+  currentPeriodEnd: '2026-03-26T00:00:00Z',
+  branchCount: 2,
+  productCount: 10,
+  userCount: 4,
+};
+
+export const DEMO_INVOICES = [
+  { id: 'inv-001', date: '2026-02-01', amount: 98, status: 'paid' as const, description: 'Pro Plan — 2 branches × $49' },
+  { id: 'inv-002', date: '2026-01-01', amount: 98, status: 'paid' as const, description: 'Pro Plan — 2 branches × $49' },
+  { id: 'inv-003', date: '2025-12-01', amount: 49, status: 'paid' as const, description: 'Pro Plan — 1 branch × $49' },
+  { id: 'inv-004', date: '2025-11-01', amount: 19, status: 'paid' as const, description: 'Starter Plan — 1 branch × $19' },
+];

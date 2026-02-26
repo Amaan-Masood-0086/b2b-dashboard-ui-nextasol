@@ -26,6 +26,7 @@ import UsersPage from "./pages/Users";
 import ReportsPage from "./pages/Reports";
 import SettingsPage from "./pages/Settings";
 import AuditLogsPage from "./pages/AuditLogs";
+import BillingPage from "./pages/Billing";
 import { AdminDashboard, AdminMerchants, AdminSubscriptions } from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/users" element={<UsersPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/billing" element={<BillingPage />} />
             <Route path="/audit-logs" element={<AuditLogsPage />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/merchants" element={<AdminMerchants />} />
