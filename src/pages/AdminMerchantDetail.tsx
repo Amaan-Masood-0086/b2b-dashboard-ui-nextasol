@@ -68,7 +68,8 @@ export default function AdminMerchantDetailPage() {
   const handleSuspend = () => toast.success(`${merchant.businessName} ${merchant.status === 'suspended' ? 'reactivated' : 'suspended'}`);
 
   const subStatusColor = merchant.subscriptionStatus === 'active' ? 'default' : merchant.subscriptionStatus === 'trialing' ? 'secondary' : 'destructive';
-  const totalRevenue = (recentOrders || []).filter((o: any) => o.status === 'completed').reduce((s: number, o: any) => s + o.total, 0);
+  const ordersArray = Array.isArray(recentOrders) ? recentOrders : [];
+  const totalRevenue = ordersArray.filter((o: any) => o.status === 'completed').reduce((s: number, o: any) => s + o.total, 0);
 
   return (
     <div className="p-6 space-y-6">
@@ -154,7 +155,7 @@ export default function AdminMerchantDetailPage() {
 
       {/* Branches Table */}
       <Card>
-        <CardHeader><CardTitle className="text-base">Branches ({(branches || []).length})</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Branches ({(Array.isArray(branches) ? branches : []).length})</CardTitle></CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -166,7 +167,7 @@ export default function AdminMerchantDetailPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(branches || []).map((b: any) => (
+              {(Array.isArray(branches) ? branches : []).map((b: any) => (
                 <TableRow key={b.id}>
                   <TableCell className="font-medium">{b.name}</TableCell>
                   <TableCell className="text-muted-foreground">{b.address}</TableCell>
@@ -174,7 +175,7 @@ export default function AdminMerchantDetailPage() {
                   <TableCell><Badge variant={b.status === 'active' ? 'default' : 'secondary'} className="capitalize">{b.status}</Badge></TableCell>
                 </TableRow>
               ))}
-              {(!branches || branches.length === 0) && (
+              {(!Array.isArray(branches) || branches.length === 0) && (
                 <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">No branches</TableCell></TableRow>
               )}
             </TableBody>
@@ -201,7 +202,7 @@ export default function AdminMerchantDetailPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(recentOrders || []).map((o: any) => (
+              {ordersArray.map((o: any) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-medium">{o.orderNumber}</TableCell>
                   <TableCell>{formatCurrency(o.total)}</TableCell>
@@ -209,7 +210,7 @@ export default function AdminMerchantDetailPage() {
                   <TableCell className="text-muted-foreground">{new Date(o.date).toLocaleString()}</TableCell>
                 </TableRow>
               ))}
-              {(!recentOrders || recentOrders.length === 0) && (
+              {ordersArray.length === 0 && (
                 <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">No recent orders</TableCell></TableRow>
               )}
             </TableBody>
@@ -251,9 +252,9 @@ export default function AdminMerchantDetailPage() {
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><StickyNote className="h-4 w-4" /> Admin Notes</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {(notes || []).length > 0 && (
+          {(Array.isArray(notes) ? notes : []).length > 0 && (
             <div className="space-y-3">
-              {(notes || []).map((n: any) => (
+              {(Array.isArray(notes) ? notes : []).map((n: any) => (
                 <div key={n.id} className="rounded-lg border p-3">
                   <p className="text-sm">{n.text}</p>
                   <p className="text-xs text-muted-foreground mt-1">{n.author} · {new Date(n.createdAt).toLocaleDateString()}</p>
