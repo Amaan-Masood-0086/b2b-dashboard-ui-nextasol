@@ -32,8 +32,8 @@ export default function RegisterPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) => api.post('/auth/register', data),
-    onSuccess: (res) => {
+    mutationFn: (data: FormData) => api.post('/auth/register', data) as Promise<{ data: any }>,
+    onSuccess: (res: any) => {
       const { accessToken, user } = res.data;
       login(accessToken, user);
       toast.success('Account created successfully!');

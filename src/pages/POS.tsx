@@ -129,7 +129,7 @@ export default function POSPage() {
         customerId: cart.customerId || undefined,
       };
 
-      const orderRes = await createOrder.mutateAsync(orderData);
+      const orderRes: any = await createOrder.mutateAsync(orderData);
       const orderId = orderRes.data.id;
 
       await checkoutOrder.mutateAsync({
