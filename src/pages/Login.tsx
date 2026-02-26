@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import api from '@/lib/api';
-import { DEMO_MODE, DEMO_USER, DEMO_TOKEN } from '@/lib/demo-data';
+import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_ADMIN_USER, DEMO_ADMIN_TOKEN } from '@/lib/demo-data';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,18 +71,32 @@ export default function LoginPage() {
               Sign In
             </Button>
             {DEMO_MODE && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  login(DEMO_TOKEN, DEMO_USER);
-                  toast.success('Logged in with demo account!');
-                  navigate('/');
-                }}
-              >
-                🚀 Demo Login (No Backend Needed)
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    login(DEMO_TOKEN, DEMO_USER);
+                    toast.success('Logged in with demo account!');
+                    navigate('/');
+                  }}
+                >
+                  🚀 Demo Login (Merchant Owner)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-primary/30 text-primary"
+                  onClick={() => {
+                    login(DEMO_ADMIN_TOKEN, DEMO_ADMIN_USER as any);
+                    toast.success('Logged in as Platform Admin!');
+                    navigate('/admin');
+                  }}
+                >
+                  🛡️ Admin Login (Platform Admin)
+                </Button>
+              </>
             )}
             <div className="flex items-center justify-between w-full text-sm">
               <Link to="/forgot-password" className="text-primary hover:underline">Forgot password?</Link>

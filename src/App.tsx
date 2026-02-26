@@ -30,9 +30,17 @@ import SettingsPage from "./pages/Settings";
 import AuditLogsPage from "./pages/AuditLogs";
 import BillingPage from "./pages/Billing";
 import { AdminDashboard, AdminMerchants, AdminSubscriptions } from "./pages/Admin";
+import AdminUsersPage from "./pages/AdminUsers";
+import AdminPaymentsPage from "./pages/AdminPayments";
+import AdminMerchantDetailPage from "./pages/AdminMerchantDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const ADMIN_ROLES = ['super_admin', 'billing_admin', 'support_admin'] as const;
+const MERCHANT_ALL = ['root_owner', 'branch_manager', 'cashier'] as const;
+const MERCHANT_MGMT = ['root_owner', 'branch_manager'] as const;
+const OWNER_ONLY = ['root_owner'] as const;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -51,26 +59,32 @@ const App = () => (
 
           {/* Protected routes with dashboard layout */}
           <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/pos" element={<POSPage />} />
-            <Route path="/kitchen" element={<KitchenPage />} />
-            <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/menu" element={<MenuPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/modifiers" element={<ModifiersPage />} />
-            <Route path="/tables" element={<TablesPage />} />
-            <Route path="/inventory" element={<InventoryPage />} />
-            <Route path="/customers" element={<CustomersPage />} />
-            <Route path="/shifts" element={<ShiftsPage />} />
-            <Route path="/branches" element={<BranchesPage />} />
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/billing" element={<BillingPage />} />
-            <Route path="/audit-logs" element={<AuditLogsPage />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/merchants" element={<AdminMerchants />} />
-            <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+            {/* Merchant routes */}
+            <Route path="/" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><DashboardPage /></ProtectedRoute>} />
+            <Route path="/pos" element={<ProtectedRoute allowedRoles={[...MERCHANT_ALL]}><POSPage /></ProtectedRoute>} />
+            <Route path="/kitchen" element={<ProtectedRoute allowedRoles={[...MERCHANT_ALL]}><KitchenPage /></ProtectedRoute>} />
+            <Route path="/orders" element={<ProtectedRoute allowedRoles={[...MERCHANT_ALL]}><OrdersPage /></ProtectedRoute>} />
+            <Route path="/tables" element={<ProtectedRoute allowedRoles={[...MERCHANT_ALL]}><TablesPage /></ProtectedRoute>} />
+            <Route path="/shifts" element={<ProtectedRoute allowedRoles={[...MERCHANT_ALL]}><ShiftsPage /></ProtectedRoute>} />
+            <Route path="/customers" element={<ProtectedRoute allowedRoles={[...MERCHANT_ALL]}><CustomersPage /></ProtectedRoute>} />
+            <Route path="/menu" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><MenuPage /></ProtectedRoute>} />
+            <Route path="/categories" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><CategoriesPage /></ProtectedRoute>} />
+            <Route path="/modifiers" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><ModifiersPage /></ProtectedRoute>} />
+            <Route path="/inventory" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><InventoryPage /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><ReportsPage /></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><UsersPage /></ProtectedRoute>} />
+            <Route path="/branches" element={<ProtectedRoute allowedRoles={[...OWNER_ONLY]}><BranchesPage /></ProtectedRoute>} />
+            <Route path="/billing" element={<ProtectedRoute allowedRoles={[...OWNER_ONLY]}><BillingPage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute allowedRoles={[...OWNER_ONLY]}><SettingsPage /></ProtectedRoute>} />
+            <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={[...OWNER_ONLY, ...ADMIN_ROLES]}><AuditLogsPage /></ProtectedRoute>} />
+
+            {/* Admin routes */}
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={[...ADMIN_ROLES]}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/merchants" element={<ProtectedRoute allowedRoles={['super_admin', 'support_admin']}><AdminMerchants /></ProtectedRoute>} />
+            <Route path="/admin/merchants/:id" element={<ProtectedRoute allowedRoles={['super_admin', 'support_admin']}><AdminMerchantDetailPage /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['super_admin', 'support_admin']}><AdminUsersPage /></ProtectedRoute>} />
+            <Route path="/admin/payments" element={<ProtectedRoute allowedRoles={['super_admin', 'billing_admin']}><AdminPaymentsPage /></ProtectedRoute>} />
+            <Route path="/admin/subscriptions" element={<ProtectedRoute allowedRoles={['super_admin', 'billing_admin']}><AdminSubscriptions /></ProtectedRoute>} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

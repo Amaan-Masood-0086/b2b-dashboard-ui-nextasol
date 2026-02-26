@@ -80,7 +80,10 @@ const adminSections: NavSection[] = [
     items: [
       { title: 'Admin Dashboard', url: '/admin', icon: Shield },
       { title: 'Merchants', url: '/admin/merchants', icon: Store },
+      { title: 'Users', url: '/admin/users', icon: Users },
+      { title: 'Payments', url: '/admin/payments', icon: CreditCard },
       { title: 'Subscriptions', url: '/admin/subscriptions', icon: CreditCard },
+      { title: 'Audit Logs', url: '/audit-logs', icon: ScrollText },
     ],
   },
 ];

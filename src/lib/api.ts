@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_BRANCHES, DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_TABLES, DEMO_ORDERS, DEMO_CUSTOMERS, DEMO_SHIFTS, DEMO_SHIFT_HISTORY, DEMO_NOTIFICATIONS, DEMO_INVENTORY_LOGS, DEMO_USERS, DEMO_AUDIT_LOGS, DEMO_WEEKLY_SALES, DEMO_PAYMENT_BREAKDOWN, DEMO_ORDER_TYPES, DEMO_TOP_PRODUCTS, DEMO_DAILY_REPORT, DEMO_MERCHANT, DEMO_MODIFIER_GROUPS, DEMO_BILLING_PLANS, DEMO_BILLING_SUBSCRIPTION, DEMO_INVOICES } from './demo-data';
+import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_BRANCHES, DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_TABLES, DEMO_ORDERS, DEMO_CUSTOMERS, DEMO_SHIFTS, DEMO_SHIFT_HISTORY, DEMO_NOTIFICATIONS, DEMO_INVENTORY_LOGS, DEMO_USERS, DEMO_AUDIT_LOGS, DEMO_WEEKLY_SALES, DEMO_PAYMENT_BREAKDOWN, DEMO_ORDER_TYPES, DEMO_TOP_PRODUCTS, DEMO_DAILY_REPORT, DEMO_MERCHANT, DEMO_MODIFIER_GROUPS, DEMO_BILLING_PLANS, DEMO_BILLING_SUBSCRIPTION, DEMO_INVOICES, DEMO_ADMIN_USERS, DEMO_ADMIN_PAYMENTS, DEMO_ADMIN_REVENUE, DEMO_MERCHANTS } from './demo-data';
 
 const API_URL = 'http://localhost:3000/api/v1';
 
@@ -90,8 +90,12 @@ function getDemoData(method: string, url: string): any {
   if (u === '/billing/upgrade') return { message: 'Upgraded' };
 
   // Admin
-  if (u === '/admin/dashboard') return { totalMerchants: 24, activeSubscriptions: 18, totalRevenue: 12500 };
-  if (u === '/admin/merchants') return [DEMO_MERCHANT];
+  if (u === '/admin/dashboard') return { totalMerchants: DEMO_MERCHANTS.length, activeSubscriptions: DEMO_MERCHANTS.filter(m => m.status === 'active').length, totalRevenue: DEMO_ADMIN_REVENUE.totalRevenue, mrr: DEMO_ADMIN_REVENUE.mrr };
+  if (u === '/admin/merchants' && method === 'get') return DEMO_MERCHANTS;
+  if (/^\/admin\/merchants\/[^/]+$/.test(u)) return DEMO_MERCHANTS.find(m => u.includes(m.id)) || DEMO_MERCHANTS[0];
+  if (u === '/admin/users') return DEMO_ADMIN_USERS;
+  if (u === '/admin/payments') return DEMO_ADMIN_PAYMENTS;
+  if (u === '/admin/revenue') return DEMO_ADMIN_REVENUE;
   if (u === '/subscription-plans') return [{ id: 'plan-1', name: 'Starter', pricePerBranch: 29 }, { id: 'plan-2', name: 'Pro', pricePerBranch: 59 }];
   if (u === '/admin/subscriptions') return [];
 
