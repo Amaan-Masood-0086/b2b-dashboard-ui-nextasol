@@ -122,6 +122,7 @@ export default function MenuPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12"></TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Price</TableHead>
@@ -134,6 +135,15 @@ export default function MenuPage() {
             <TableBody>
               {products.map((p) => (
                 <TableRow key={p.id}>
+                  <TableCell className="w-12 pr-0">
+                    <div className="h-9 w-9 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell>{p.category?.name || '—'}</TableCell>
                   <TableCell>${Number(p.price).toFixed(2)}</TableCell>
@@ -149,7 +159,7 @@ export default function MenuPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {products.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>}
+              {products.length === 0 && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
