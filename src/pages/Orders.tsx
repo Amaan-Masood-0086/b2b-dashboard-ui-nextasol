@@ -29,7 +29,7 @@ export default function OrdersPage() {
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [actionDialog, setActionDialog] = useState<{ type: 'void' | 'refund'; orderId: string } | null>(null);
@@ -38,7 +38,7 @@ export default function OrdersPage() {
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ['orders', branchId, page, status],
     queryFn: () => api.get(`/branches/${branchId}/orders`, {
-      params: { page, limit: 20, status: status || undefined },
+      params: { page, limit: 20, status: status === 'all' ? undefined : status || undefined },
     }).then((r) => r.data),
     enabled: !!branchId,
   });
@@ -96,7 +96,7 @@ export default function OrdersPage() {
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-40"><SelectValue placeholder="All statuses" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="voided">Voided</SelectItem>
