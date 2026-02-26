@@ -14,6 +14,7 @@ import VerifyEmailPage from "./pages/VerifyEmail";
 import ResetPasswordPage from "./pages/ResetPassword";
 import DashboardPage from "./pages/Dashboard";
 import POSPage from "./pages/POS";
+import KitchenPage from "./pages/Kitchen";
 import OrdersPage from "./pages/Orders";
 import MenuPage from "./pages/Menu";
 import CategoriesPage from "./pages/Categories";
@@ -52,6 +53,7 @@ const App = () => (
           <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/pos" element={<POSPage />} />
+            <Route path="/kitchen" element={<KitchenPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
