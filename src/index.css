@@ -129,3 +129,23 @@
     scrollbar-width: thin;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-content,
+  #receipt-content * {
+    visibility: visible;
+  }
+  #receipt-content {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 300px;
+  }
+  .print\\:hidden {
+    display: none !important;
+  }
+}

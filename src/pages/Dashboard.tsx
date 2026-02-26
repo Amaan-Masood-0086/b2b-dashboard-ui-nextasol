@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { DollarSign, ShoppingCart, TrendingUp, CalendarIcon } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -101,7 +102,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-8 w-24" />
               ) : (
                 <p className="text-2xl font-bold">
-                  {stat.format === 'currency' ? `$${Number(stat.value).toLocaleString('en', { minimumFractionDigits: 2 })}` : stat.value}
+                  {stat.format === 'currency' ? formatCurrency(Number(stat.value)) : stat.value}
                 </p>
               )}
             </CardContent>

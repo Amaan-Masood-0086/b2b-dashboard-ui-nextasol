@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Search, Eye } from 'lucide-react';
+import { Plus, Pencil, Search, Eye, Users } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
+import { EmptyState } from '@/components/EmptyState';
 import api from '@/lib/api';
 import { Customer, Order } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -74,14 +76,14 @@ export default function CustomersPage() {
                   <TableCell className="text-muted-foreground">{c.email || '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{c.phone || '—'}</TableCell>
                   <TableCell>{c.totalOrders ?? 0}</TableCell>
-                  <TableCell>${Number(c.totalSpent ?? 0).toFixed(2)}</TableCell>
+                  <TableCell>{formatCurrency(Number(c.totalSpent ?? 0))}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailCustomer(c)}><Eye className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {list.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No customers</TableCell></TableRow>}
+              {list.length === 0 && <TableRow><TableCell colSpan={6} className="text-center p-0"><EmptyState icon={Users} title="No customers yet" description="Add customers to track their orders and preferences." actionLabel="Add Customer" onAction={openCreate} /></TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
