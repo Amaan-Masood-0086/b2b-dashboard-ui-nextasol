@@ -187,7 +187,21 @@ export default function MenuPage() {
               <div className="space-y-1.5"><Label>Low Stock Threshold</Label><Input type="number" value={form.lowStockThreshold} onChange={(e) => setForm({ ...form, lowStockThreshold: e.target.value })} /></div>
             </div>
             <div className="space-y-1.5"><Label>SKU</Label><Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Image URL</Label><Input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} /></div>
+            <div className="space-y-1.5">
+              <Label>Image URL</Label>
+              <Input placeholder="https://example.com/image.jpg" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
+              {form.imageUrl && (
+                <div className="relative w-full h-32 rounded-md overflow-hidden border bg-muted">
+                  <img
+                    src={form.imageUrl}
+                    alt="Product preview"
+                    className="w-full h-full object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    onLoad={(e) => { (e.target as HTMLImageElement).style.display = 'block'; }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
