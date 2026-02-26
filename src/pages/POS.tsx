@@ -4,7 +4,7 @@ import { Search, Plus, Minus, Trash2, ShoppingBag, X, PanelRightOpen, PanelRight
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore, CartModifier } from '@/stores/cart-store';
-import { Product, Category, Table, ModifierGroup } from '@/lib/types';
+import { Product, Category, Table, ModifierGroup, Customer } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,6 +52,11 @@ export default function POSPage() {
     enabled: !!branchId,
   });
 
+  const { data: customersData } = useQuery({
+    queryKey: ['customers'],
+    queryFn: () => api.get('/customers').then((r) => r.data),
+  });
+
   const { data: currentShift } = useQuery({
     queryKey: ['current-shift', branchId],
     queryFn: () => api.get(`/branches/${branchId}/shifts/current`).then((r) => r.data).catch(() => null),
@@ -70,6 +75,7 @@ export default function POSPage() {
   const products: Product[] = Array.isArray(productsData) ? productsData : productsData?.data ?? [];
   const categoryList: Category[] = Array.isArray(categories) ? categories : categories?.data ?? [];
   const tableList: Table[] = Array.isArray(tables) ? tables : tables?.data ?? [];
+  const customerList: Customer[] = Array.isArray(customersData) ? customersData : customersData?.data ?? [];
 
   const handleAddProduct = (product: Product) => {
     if (product.modifierGroups && product.modifierGroups.length > 0) {
@@ -272,6 +278,18 @@ export default function POSPage() {
               </SelectContent>
             </Select>
           )}
+
+          <Select value={cart.customerId || 'none'} onValueChange={(v) => cart.setCustomerId(v === 'none' ? null : v)}>
+            <SelectTrigger className="mt-2 h-8 text-xs">
+              <SelectValue placeholder="Customer (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No customer</SelectItem>
+              {customerList.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <ScrollArea className="flex-1">
