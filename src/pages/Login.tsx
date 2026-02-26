@@ -4,7 +4,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/hooks/use-theme';
 import api from '@/lib/api';
 import { DEMO_MODE, DEMO_USER, DEMO_TOKEN, DEMO_ADMIN_USER, DEMO_ADMIN_TOKEN } from '@/lib/demo-data';
 import { useAuthStore } from '@/stores/auth-store';
@@ -42,8 +43,19 @@ export default function LoginPage() {
     },
   });
 
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 relative">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-4 right-4"
+        onClick={toggleTheme}
+        aria-label="Toggle theme"
+      >
+        {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </Button>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg">
