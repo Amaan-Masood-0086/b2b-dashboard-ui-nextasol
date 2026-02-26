@@ -22,7 +22,7 @@ export default function MenuPage() {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [form, setForm] = useState({ name: '', description: '', categoryId: '', price: '', costPrice: '', stock: '', lowStockThreshold: '', sku: '', imageUrl: '' });
@@ -30,7 +30,7 @@ export default function MenuPage() {
   const { data: productsData } = useQuery({
     queryKey: ['products', branchId, page, search, categoryFilter],
     queryFn: () => api.get(`/branches/${branchId}/products`, {
-      params: { page, limit: 20, search: search || undefined, categoryId: categoryFilter || undefined },
+      params: { page, limit: 20, search: search || undefined, categoryId: categoryFilter === 'all' ? undefined : categoryFilter || undefined },
     }).then((r) => r.data),
     enabled: !!branchId,
   });
@@ -111,7 +111,7 @@ export default function MenuPage() {
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-40"><SelectValue placeholder="All categories" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             {categoryList.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
