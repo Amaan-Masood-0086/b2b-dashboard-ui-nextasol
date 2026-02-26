@@ -34,10 +34,19 @@ export function AdminMerchants() {
       <h1 className="text-2xl font-bold">Merchants</h1>
       <Card><CardContent className="p-0">
         <Table>
-          <TableHeader><TableRow><TableHead>Business</TableHead><TableHead>Currency</TableHead><TableHead>Created</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Business</TableHead><TableHead>Plan</TableHead><TableHead>Branches</TableHead><TableHead>Status</TableHead><TableHead>Created</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
           <TableBody>
-            {list.map((m: any) => <TableRow key={m.id}><TableCell className="font-medium">{m.businessName}</TableCell><TableCell>{m.currency}</TableCell><TableCell className="text-muted-foreground text-sm">{m.createdAt?.slice(0,10)}</TableCell></TableRow>)}
-            {list.length === 0 && <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">No merchants</TableCell></TableRow>}
+            {list.map((m: any) => <TableRow key={m.id}>
+              <TableCell className="font-medium">{m.businessName}</TableCell>
+              <TableCell>{m.planName || m.currency}</TableCell>
+              <TableCell>{m.branchCount ?? '—'}</TableCell>
+              <TableCell><Badge variant={m.status === 'active' ? 'default' : 'destructive'} className="capitalize">{m.status || 'active'}</Badge></TableCell>
+              <TableCell className="text-muted-foreground text-sm">{m.createdAt?.slice(0,10)}</TableCell>
+              <TableCell className="text-right">
+                <Button size="sm" variant="outline" onClick={() => window.location.href = `/admin/merchants/${m.id}`}>View Details</Button>
+              </TableCell>
+            </TableRow>)}
+            {list.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No merchants</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent></Card>

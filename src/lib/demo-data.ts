@@ -185,3 +185,59 @@ export const DEMO_INVOICES = [
   { id: 'inv-003', date: '2025-12-01', amount: 49, status: 'paid' as const, description: 'Pro Plan — 1 branch × $49' },
   { id: 'inv-004', date: '2025-11-01', amount: 19, status: 'paid' as const, description: 'Starter Plan — 1 branch × $19' },
 ];
+
+// ==================== ADMIN / PLATFORM DATA ====================
+
+export const DEMO_ADMIN_USER = {
+  id: 'admin-user-001',
+  email: 'admin@cloudpos.com',
+  firstName: 'Platform',
+  lastName: 'Admin',
+  role: 'super_admin' as const,
+};
+
+export const DEMO_ADMIN_TOKEN = 'demo-admin-jwt-token';
+
+export const DEMO_MERCHANTS = [
+  { id: 'demo-merchant-001', businessName: 'CloudPOS Demo Restaurant', phone: '+1-555-0100', address: '123 Main Street, City', currency: 'USD', timezone: 'America/New_York', status: 'active', planName: 'Pro', branchCount: 2, userCount: 4, createdAt: '2025-06-15' },
+  { id: 'demo-merchant-002', businessName: 'Burger Palace', phone: '+1-555-0200', address: '456 Oak Avenue, Town', currency: 'USD', timezone: 'America/Chicago', status: 'active', planName: 'Starter', branchCount: 1, userCount: 2, createdAt: '2025-09-01' },
+  { id: 'demo-merchant-003', businessName: 'Sushi Express', phone: '+1-555-0300', address: '789 Pine Blvd, Village', currency: 'USD', timezone: 'America/Los_Angeles', status: 'suspended', planName: 'Pro', branchCount: 3, userCount: 8, createdAt: '2025-04-20' },
+  { id: 'demo-merchant-004', businessName: 'Pizza Hub Central', phone: '+1-555-0400', address: '321 Elm St, Metro', currency: 'EUR', timezone: 'Europe/London', status: 'active', planName: 'Enterprise', branchCount: 12, userCount: 45, createdAt: '2024-11-10' },
+];
+
+export const DEMO_ADMIN_USERS = [
+  { id: 'user-001', email: 'demo@cloudpos.com', firstName: 'Demo', lastName: 'Owner', role: 'root_owner', merchantName: 'CloudPOS Demo Restaurant', merchantId: 'demo-merchant-001', branchName: 'Main Branch', isActive: true, lastLogin: '2026-02-26T08:00:00Z' },
+  { id: 'user-002', email: 'john@cloudpos.com', firstName: 'John', lastName: 'Cashier', role: 'cashier', merchantName: 'CloudPOS Demo Restaurant', merchantId: 'demo-merchant-001', branchName: 'Main Branch', isActive: true, lastLogin: '2026-02-26T09:15:00Z' },
+  { id: 'user-003', email: 'jane@cloudpos.com', firstName: 'Jane', lastName: 'Manager', role: 'branch_manager', merchantName: 'CloudPOS Demo Restaurant', merchantId: 'demo-merchant-001', branchName: 'Downtown Branch', isActive: true, lastLogin: '2026-02-25T14:30:00Z' },
+  { id: 'user-004', email: 'bob@cloudpos.com', firstName: 'Bob', lastName: 'Cashier', role: 'cashier', merchantName: 'CloudPOS Demo Restaurant', merchantId: 'demo-merchant-001', branchName: 'Downtown Branch', isActive: false, lastLogin: '2026-02-20T11:00:00Z' },
+  { id: 'user-005', email: 'ali@burgerpalace.com', firstName: 'Ali', lastName: 'Khan', role: 'root_owner', merchantName: 'Burger Palace', merchantId: 'demo-merchant-002', branchName: 'Main', isActive: true, lastLogin: '2026-02-26T07:30:00Z' },
+  { id: 'user-006', email: 'sara@burgerpalace.com', firstName: 'Sara', lastName: 'Ahmed', role: 'cashier', merchantName: 'Burger Palace', merchantId: 'demo-merchant-002', branchName: 'Main', isActive: true, lastLogin: '2026-02-25T16:00:00Z' },
+  { id: 'user-007', email: 'kenji@sushiexpress.com', firstName: 'Kenji', lastName: 'Tanaka', role: 'root_owner', merchantName: 'Sushi Express', merchantId: 'demo-merchant-003', branchName: 'Downtown', isActive: true, lastLogin: '2026-02-24T12:00:00Z' },
+  { id: 'user-008', email: 'marco@pizzahub.com', firstName: 'Marco', lastName: 'Rossi', role: 'root_owner', merchantName: 'Pizza Hub Central', merchantId: 'demo-merchant-004', branchName: 'HQ', isActive: true, lastLogin: '2026-02-26T06:00:00Z' },
+];
+
+export const DEMO_ADMIN_PAYMENTS = [
+  { id: 'pay-001', date: '2026-02-01', merchantName: 'CloudPOS Demo Restaurant', merchantId: 'demo-merchant-001', plan: 'Pro', amount: 98, status: 'paid' as const },
+  { id: 'pay-002', date: '2026-02-01', merchantName: 'Burger Palace', merchantId: 'demo-merchant-002', plan: 'Starter', amount: 19, status: 'paid' as const },
+  { id: 'pay-003', date: '2026-02-01', merchantName: 'Sushi Express', merchantId: 'demo-merchant-003', plan: 'Pro', amount: 147, status: 'overdue' as const },
+  { id: 'pay-004', date: '2026-02-01', merchantName: 'Pizza Hub Central', merchantId: 'demo-merchant-004', plan: 'Enterprise', amount: 1188, status: 'paid' as const },
+  { id: 'pay-005', date: '2026-01-01', merchantName: 'CloudPOS Demo Restaurant', merchantId: 'demo-merchant-001', plan: 'Pro', amount: 98, status: 'paid' as const },
+  { id: 'pay-006', date: '2026-01-01', merchantName: 'Burger Palace', merchantId: 'demo-merchant-002', plan: 'Starter', amount: 19, status: 'paid' as const },
+  { id: 'pay-007', date: '2026-01-01', merchantName: 'Pizza Hub Central', merchantId: 'demo-merchant-004', plan: 'Enterprise', amount: 1188, status: 'paid' as const },
+  { id: 'pay-008', date: '2025-12-01', merchantName: 'CloudPOS Demo Restaurant', merchantId: 'demo-merchant-001', plan: 'Pro', amount: 49, status: 'paid' as const },
+];
+
+export const DEMO_ADMIN_REVENUE = {
+  totalRevenue: 28450,
+  monthlyRevenue: 1452,
+  activeSubscriptions: 18,
+  mrr: 1452,
+  trend: [
+    { month: 'Sep', revenue: 890 },
+    { month: 'Oct', revenue: 1020 },
+    { month: 'Nov', revenue: 1150 },
+    { month: 'Dec', revenue: 1280 },
+    { month: 'Jan', revenue: 1380 },
+    { month: 'Feb', revenue: 1452 },
+  ],
+};

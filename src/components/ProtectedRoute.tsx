@@ -6,6 +6,14 @@ interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
 }
 
+const ADMIN_ROLES: UserRole[] = ['super_admin', 'billing_admin', 'support_admin'];
+
+function getDefaultRoute(role: UserRole): string {
+  if (ADMIN_ROLES.includes(role)) return '/admin';
+  if (role === 'cashier') return '/pos';
+  return '/';
+}
+
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { isAuthenticated, user } = useAuthStore();
 
@@ -14,7 +22,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={getDefaultRoute(user.role)} replace />;
   }
 
   return <>{children}</>;
