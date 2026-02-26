@@ -1,208 +1,132 @@
 
-# CloudPOS — Complete Frontend Build Plan
+
+# CloudPOS SaaS Enhancement Plan
 
 ## Overview
-Build the entire CloudPOS frontend — a multi-tenant point-of-sale system with 18+ pages, connecting to your existing REST API at `http://localhost:3000/api/v1`. Clean & minimal design with white backgrounds, subtle shadows, and modern SaaS aesthetics.
+Implement 6 key SaaS-readiness features to make CloudPOS production-ready: Onboarding Wizard, Receipt Generation, Dynamic Currency Formatting, CSV Exports, Keyboard Shortcuts for POS, and Empty States for new accounts.
 
 ---
 
-## Foundation & Layout
+## 1. Post-Registration Onboarding Wizard
 
-### API Client & Auth Infrastructure
-- Axios instance with JWT interceptor (token from localStorage)
-- React Query setup for all data fetching
-- Zustand store for auth state (user, token, role) and cart state (POS)
-- Protected route wrapper that redirects unauthenticated users to login
-- Role-based access control (hide/show pages based on user role)
+Create a new `/onboarding` page that guides new merchants through 4 steps after signup.
 
-### App Shell Layout
-- **Sidebar** (collapsible) with navigation grouped by section:
-  - *Main*: Dashboard, POS
-  - *Operations*: Orders, Tables, Shifts
-  - *Catalog*: Menu (Products), Categories, Modifiers
-  - *Management*: Inventory, Customers
-  - *Business*: Reports, Branches, Users
-  - *System*: Settings, Audit Logs
-- **Top Bar**: Branch selector dropdown, notification bell (with unread count badge polling every 30s), user avatar with dropdown (profile, change password, logout)
-- Active route highlighting and role-based menu filtering (cashiers only see POS, Orders, Tables)
+**Steps:**
+1. Business Profile (timezone, currency, address)
+2. Create First Branch (name, phone, address, tax rate)
+3. Add First Category + Product
+4. Open First Shift
+
+**Implementation:**
+- New file: `src/pages/Onboarding.tsx` -- multi-step wizard with a progress bar using the existing `Progress` component
+- Add route `/onboarding` in `App.tsx`
+- After registration in `Register.tsx`, redirect to `/onboarding` instead of `/`
+- Each step calls the appropriate API endpoint; on completion, redirect to `/pos`
+- Steps are skippable (except Step 1) with a "Skip for now" button
 
 ---
 
-## Auth Pages (Public, No Sidebar)
+## 2. Receipt Generation (Post-Checkout)
 
-### Login Page
-- Email + password form with validation
-- "Forgot Password?" link
-- Stores JWT token and user data on success, redirects to dashboard
+After a successful POS checkout, show a printable receipt dialog.
 
-### Register Page
-- Merchant registration: business name, owner name, email, password, phone
-- Creates merchant + root owner account
-- Auto-login after registration
-
-### Forgot Password Page
-- Email input → calls forgot-password API
-- Success message with instructions
-
-### Reset Password Page
-- New password form (with token from URL)
-- Redirects to login on success
+**Implementation:**
+- New component: `src/components/pos/ReceiptDialog.tsx`
+- Contains: Business name, branch info, order number, date/time, itemized list with modifiers, subtotal, discount, tax, total, payment method, change (if cash), and a "Thank you" footer
+- Two buttons: **Print** (`window.print()` with `@media print` CSS) and **Close**
+- In `POS.tsx`, after `handleCheckout` succeeds, open receipt dialog with the order data
+- Add print-specific CSS in `src/index.css` using `@media print` to hide everything except the receipt
 
 ---
 
-## Dashboard (Home Page)
-- **Stats Cards**: Today's revenue, total orders, average order value, active tables
-- **Weekly Sales Chart** (line/bar chart via Recharts) — 7-day trend
-- **Payment Breakdown** (pie/donut chart) — cash vs card vs split
-- **Order Type Distribution** (pie chart) — dine-in vs takeaway vs delivery
-- **Top Selling Products** (horizontal bar chart or ranked list)
-- Date picker to change the report date
+## 3. Dynamic Currency Formatting
+
+Replace all hardcoded `$` symbols with a locale-aware currency formatter.
+
+**Implementation:**
+- New utility: `src/lib/currency.ts` -- exports `formatCurrency(amount, currency?)` using `Intl.NumberFormat`
+- Default currency read from a Zustand store or merchant config (fallback: `USD`)
+- Add `currency` field to auth store from merchant profile
+- Update all pages that display money: `POS.tsx`, `Orders.tsx`, `Dashboard.tsx`, `Reports.tsx`, `Menu.tsx`, `Inventory.tsx`, `Shifts.tsx`
+- Replace patterns like `` `$${amount.toFixed(2)}` `` with `formatCurrency(amount)`
 
 ---
 
-## POS Terminal
-- **Category tabs/filters** across the top
-- **Product grid** (cards with image, name, price) — searchable
-- **Cart sidebar** on the right:
-  - Line items with quantity +/- controls, notes, modifier details
-  - Discount input (percentage or fixed)
-  - Subtotal, discount, tax, total calculation
-  - Order type selector (dine-in, takeaway, delivery)
-  - Table selector (for dine-in)
-  - Customer selector (optional)
-- **Modifier selection dialog**: When adding a product with modifiers, show a modal to pick required/optional modifiers before adding to cart
-- **Checkout dialog**: Payment method selection, amount received input (for cash), change calculation
-- **Shift bar** at the top: Shows current shift status, open/close shift button, cash movement button
+## 4. CSV Export for Orders, Menu, and Inventory
+
+Add "Export CSV" buttons to three pages.
+
+**Implementation:**
+- New utility: `src/lib/csv-export.ts` -- generic `exportToCSV(data, columns, filename)` function that creates a Blob and triggers download
+- **Orders page**: Export button downloads all filtered orders (order number, date, type, status, customer, total, payment method)
+- **Menu page**: Export button downloads all products (name, category, price, cost price, stock, SKU, status)
+- **Inventory page**: Export button downloads inventory logs (date, product, type, quantity, reason)
+- Wire up existing `Download` icon buttons that are already imported in these pages
 
 ---
 
-## Orders Page
-- **Orders table** with columns: Order #, Type, Status, Items count, Total, Payment Method, Date
-- **Filters**: Status, payment method, date range, customer
-- **Pagination**
-- **Order detail dialog/page**: Full order breakdown with items, modifiers, notes, timestamps
-- **Actions**: Void order, Refund order (with reason dialog) — for managers/owners only
-- **Export CSV** button
+## 5. POS Keyboard Shortcuts
+
+Add keyboard shortcuts for high-volume cashier usage.
+
+**Implementation:**
+- `useEffect` with `keydown` listener in `POS.tsx`
+- Shortcuts:
+  - `Enter` -- Open checkout dialog (when cart has items)
+  - `Escape` -- Close any open dialog / clear search
+  - `F2` -- Focus search input
+  - `Delete` -- Clear cart (with confirmation)
+- Small hint badge shown below the checkout button: "Press Enter to checkout"
 
 ---
 
-## Menu (Products) Page
-- **Products table**: Name, Category, Price, Cost, Stock, SKU, Status
-- **Search & filter** by category, low stock
-- **Create/Edit product dialog**: Form with all fields including image upload, category select, modifier group linking
-- **Soft-delete** (deactivate) with confirmation
-- **Export CSV** button
+## 6. Empty States for Fresh Accounts
+
+Add friendly empty states with call-to-action buttons for pages with no data.
+
+**Implementation:**
+- New reusable component: `src/components/EmptyState.tsx` -- icon, title, description, CTA button
+- Add to: Menu (no products -> "Add your first product"), Categories (no categories -> "Create a category"), Orders (no orders -> "Start taking orders"), Tables (no tables -> "Add a table"), Customers (no customers -> "Add customer"), Inventory (no stock alerts -> show positive message)
 
 ---
 
-## Categories Management
-- Simple list/table of categories with name and sort order
-- Inline create/edit/delete
+## Technical Details
 
----
+### New Files
+| File | Purpose |
+|------|---------|
+| `src/pages/Onboarding.tsx` | Multi-step onboarding wizard |
+| `src/components/pos/ReceiptDialog.tsx` | Printable receipt component |
+| `src/lib/currency.ts` | Currency formatting utility |
+| `src/lib/csv-export.ts` | CSV export utility |
+| `src/components/EmptyState.tsx` | Reusable empty state component |
 
-## Modifiers Page
-- **Modifier groups list**: Name, Required flag, Max selections, Options count
-- **Create/Edit modifier group dialog**: Name, isRequired, maxSelect, inline options editor (add/remove options with name, price adjustment, sort order)
-- **Delete** modifier group with confirmation
+### Modified Files
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add `/onboarding` route |
+| `src/pages/Register.tsx` | Redirect to `/onboarding` |
+| `src/pages/POS.tsx` | Receipt dialog, keyboard shortcuts, currency formatting |
+| `src/pages/Orders.tsx` | CSV export, currency formatting |
+| `src/pages/Menu.tsx` | CSV export, empty state, currency formatting |
+| `src/pages/Dashboard.tsx` | Currency formatting |
+| `src/pages/Reports.tsx` | Currency formatting |
+| `src/pages/Inventory.tsx` | CSV export, empty state |
+| `src/pages/Tables.tsx` | Empty state |
+| `src/pages/Categories.tsx` | Empty state |
+| `src/pages/Customers.tsx` | Empty state |
+| `src/pages/Shifts.tsx` | Currency formatting |
+| `src/stores/auth-store.ts` | Add `currency` field |
+| `src/index.css` | Add `@media print` styles |
+| `src/lib/api.ts` | Add demo data for onboarding endpoints |
+| `src/lib/demo-data.ts` | Add onboarding demo responses |
 
----
+### Execution Order
+1. Currency utility + auth store update (foundation)
+2. Empty state component (reusable)
+3. CSV export utility + wire to pages
+4. Onboarding wizard
+5. Receipt dialog
+6. Keyboard shortcuts
+7. Apply currency formatting across all pages
 
-## Inventory Page
-- **Low stock alerts** section at the top
-- **Stock adjustment form**: Select product, quantity, type (add/subtract/adjustment), reason
-- **Inventory logs table**: Product, change type, quantity, reason, date — filterable by product and date
-- **Export CSV** button
-
----
-
-## Tables Page (Dine-In)
-- **Visual grid** of tables as cards showing: table number, capacity, status (color-coded: green=available, red=occupied, yellow=reserved)
-- **Create table dialog**: Table number, capacity
-- **Status toggle** on each table card
-- **Delete** table with confirmation
-
----
-
-## Customers (CRM) Page
-- **Customers table**: Name, Email, Phone, Total Orders, Total Spent
-- **Search** by name/email/phone
-- **Create/Edit customer dialog**
-- **Customer detail view**: Profile info + order history
-
----
-
-## Shifts Page
-- **Current shift status** card (if open): Opening balance, current expected balance, total sales, cash in/out
-- **Open/Close shift dialogs** with balance input
-- **Cash movement dialog**: Type (in/out), amount, reason
-- **Shift history table**: Open/close times, opening/closing balance, expected balance, variance, total sales
-
----
-
-## Branches Page
-- **Branches table**: Name, Address, Phone, Tax Rate, Currency, Status
-- **Create/Edit branch dialog**: All fields
-- **Deactivate** branch with confirmation
-
----
-
-## Users (Staff) Page
-- **Users table**: Name, Email, Role, Branch, Status
-- **Create user dialog**: Email, password, name, phone, role (cashier/branch_manager), branch assignment
-- **Edit user** and **Enable/Disable** toggle
-
----
-
-## Reports Page
-- **Date range selector**
-- **Daily summary cards**: Revenue, orders, avg order value
-- **Monthly breakdown table/chart**
-- **Top products chart**
-- **Weekly sales trend chart**
-- **Payment method breakdown chart**
-- **Order type distribution chart**
-
----
-
-## Settings Page
-- **Merchant profile form**: Business name, phone, address, currency, timezone
-- **Change password form**
-
----
-
-## Audit Logs Page
-- **Logs table**: Action, User, Details, Timestamp
-- **Filters**: Action type, date
-- **Pagination**
-
----
-
-## Admin Pages (Platform Admin)
-
-### Admin Dashboard
-- Platform-wide stats: Total merchants, active subscriptions, revenue
-
-### Merchants Management
-- **Merchants table** with details view
-
-### Subscriptions Management
-- **Subscription plans list** with create plan
-- **Active subscriptions table** with activate/suspend actions
-
----
-
-## Notifications
-- **Bell icon** in top bar with unread count (polled every 30s)
-- **Dropdown panel** showing recent notifications
-- Mark as read / Mark all as read
-- Notification types: Low stock alerts, order alerts, system messages
-
----
-
-## Design System
-- Clean white backgrounds with subtle gray borders
-- Consistent card-based layouts with soft shadows
-- Primary accent color for CTAs and active states
-- Status colors: Green (success/available), Red (error/occupied), Yellow (warning/reserved), Blue (info/pending)
-- Responsive design — works on desktop and tablet (POS optimized for tablet landscape)
