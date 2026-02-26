@@ -1,132 +1,113 @@
 
+# Complete CloudPOS: Real-Time Notifications, Bug Fixes, and Remaining Features
 
-# CloudPOS SaaS Enhancement Plan
+## 1. Fix Build Error in Inventory.tsx
+The `UpgradeGate` wrapper has mismatched JSX nesting -- the `<div>` closes before `</UpgradeGate>`. Fix the indentation/nesting so the closing tags are in the correct order.
 
-## Overview
-Implement 6 key SaaS-readiness features to make CloudPOS production-ready: Onboarding Wizard, Receipt Generation, Dynamic Currency Formatting, CSV Exports, Keyboard Shortcuts for POS, and Empty States for new accounts.
+## 2. Real-Time Notifications via Polling
 
----
+Since there's no backend/WebSocket available (demo mode), implement a polling-based notification system that simulates real-time order sync across terminals.
 
-## 1. Post-Registration Onboarding Wizard
+### New: Notification Store (`src/stores/notification-store.ts`)
+- Zustand store managing a live notification feed
+- `addNotification(notification)` pushes to the list and shows a sonner toast
+- `notifications`, `unreadCount`, `markRead`, `markAllRead`
 
-Create a new `/onboarding` page that guides new merchants through 4 steps after signup.
+### New: Notification Hook (`src/hooks/use-realtime-notifications.ts`)
+- Polls `/notifications/unread-count` every 15 seconds using React Query
+- When new notifications arrive (count changes), fetches full list and pushes to store
+- Shows sonner toast for new notifications (order completed, low stock, etc.)
 
-**Steps:**
-1. Business Profile (timezone, currency, address)
-2. Create First Branch (name, phone, address, tax rate)
-3. Add First Category + Product
-4. Open First Shift
+### New: Live Order Ticker (`src/components/LiveOrderTicker.tsx`)
+- Small bar at the top of POS and Dashboard pages showing the latest order activity
+- Polls `/orders` every 20 seconds with `refetchInterval`
+- Shows "Order #ORD-XXXX just completed" with a fade animation
 
-**Implementation:**
-- New file: `src/pages/Onboarding.tsx` -- multi-step wizard with a progress bar using the existing `Progress` component
-- Add route `/onboarding` in `App.tsx`
-- After registration in `Register.tsx`, redirect to `/onboarding` instead of `/`
-- Each step calls the appropriate API endpoint; on completion, redirect to `/pos`
-- Steps are skippable (except Step 1) with a "Skip for now" button
+### Update: TopBar Notifications
+- Connect the existing TopBar notification bell to the notification store for real-time count updates
+- Add a subtle pulse animation on the bell icon when new notifications arrive
 
----
+### Demo Data Enhancement
+- Add a simulated event generator in demo-data that rotates through fake events (new order, stock alert, shift opened) to make polling feel alive
 
-## 2. Receipt Generation (Post-Checkout)
+## 3. Email Verification Flow (Post-Registration)
 
-After a successful POS checkout, show a printable receipt dialog.
+### New: Email Verification Page (`src/pages/VerifyEmail.tsx`)
+- Shows after registration: "We sent a verification code to your email"
+- 6-digit OTP input using the existing `input-otp` component
+- "Resend code" button with 60-second cooldown timer
+- On success, redirect to `/onboarding`
 
-**Implementation:**
-- New component: `src/components/pos/ReceiptDialog.tsx`
-- Contains: Business name, branch info, order number, date/time, itemized list with modifiers, subtotal, discount, tax, total, payment method, change (if cash), and a "Thank you" footer
-- Two buttons: **Print** (`window.print()` with `@media print` CSS) and **Close**
-- In `POS.tsx`, after `handleCheckout` succeeds, open receipt dialog with the order data
-- Add print-specific CSS in `src/index.css` using `@media print` to hide everything except the receipt
+### Updates
+- `Register.tsx`: redirect to `/verify-email` instead of `/onboarding`
+- `App.tsx`: add `/verify-email` route
+- `api.ts` + `demo-data.ts`: add `/auth/verify-email` and `/auth/resend-verification` demo endpoints
 
----
+## 4. Activity Feed on Dashboard
 
-## 3. Dynamic Currency Formatting
+### Update: Dashboard.tsx
+- Add a "Recent Activity" card below existing charts
+- Shows last 5 audit log entries (fetched from `/audit-logs`)
+- Each entry shows icon, action description, user name, and relative time ("2 min ago")
+- Links to full Audit Logs page
 
-Replace all hardcoded `$` symbols with a locale-aware currency formatter.
+## 5. Quick Actions Widget on Dashboard
 
-**Implementation:**
-- New utility: `src/lib/currency.ts` -- exports `formatCurrency(amount, currency?)` using `Intl.NumberFormat`
-- Default currency read from a Zustand store or merchant config (fallback: `USD`)
-- Add `currency` field to auth store from merchant profile
-- Update all pages that display money: `POS.tsx`, `Orders.tsx`, `Dashboard.tsx`, `Reports.tsx`, `Menu.tsx`, `Inventory.tsx`, `Shifts.tsx`
-- Replace patterns like `` `$${amount.toFixed(2)}` `` with `formatCurrency(amount)`
+### Update: Dashboard.tsx
+- Add a "Quick Actions" card with shortcut buttons:
+  - "New Order" -> `/pos`
+  - "Add Product" -> `/menu`
+  - "View Reports" -> `/reports`
+  - "Manage Staff" -> `/users`
+- Uses icon buttons in a 2x2 grid
 
----
+## 6. Session Timeout / Auto-Logout
 
-## 4. CSV Export for Orders, Menu, and Inventory
+### New: Hook (`src/hooks/use-session-timeout.ts`)
+- Tracks user activity (mouse, keyboard, scroll)
+- After 30 minutes of inactivity, show a warning dialog
+- After 5 more minutes, auto-logout via auth store
+- Reset timer on any activity
 
-Add "Export CSV" buttons to three pages.
+### New: Session Warning Dialog
+- "Your session is about to expire" with countdown
+- "Stay Logged In" button resets timer
+- "Logout" button logs out immediately
 
-**Implementation:**
-- New utility: `src/lib/csv-export.ts` -- generic `exportToCSV(data, columns, filename)` function that creates a Blob and triggers download
-- **Orders page**: Export button downloads all filtered orders (order number, date, type, status, customer, total, payment method)
-- **Menu page**: Export button downloads all products (name, category, price, cost price, stock, SKU, status)
-- **Inventory page**: Export button downloads inventory logs (date, product, type, quantity, reason)
-- Wire up existing `Download` icon buttons that are already imported in these pages
+### Update: DashboardLayout.tsx
+- Include the session timeout hook
 
----
+## Implementation Sequence
 
-## 5. POS Keyboard Shortcuts
-
-Add keyboard shortcuts for high-volume cashier usage.
-
-**Implementation:**
-- `useEffect` with `keydown` listener in `POS.tsx`
-- Shortcuts:
-  - `Enter` -- Open checkout dialog (when cart has items)
-  - `Escape` -- Close any open dialog / clear search
-  - `F2` -- Focus search input
-  - `Delete` -- Clear cart (with confirmation)
-- Small hint badge shown below the checkout button: "Press Enter to checkout"
-
----
-
-## 6. Empty States for Fresh Accounts
-
-Add friendly empty states with call-to-action buttons for pages with no data.
-
-**Implementation:**
-- New reusable component: `src/components/EmptyState.tsx` -- icon, title, description, CTA button
-- Add to: Menu (no products -> "Add your first product"), Categories (no categories -> "Create a category"), Orders (no orders -> "Start taking orders"), Tables (no tables -> "Add a table"), Customers (no customers -> "Add customer"), Inventory (no stock alerts -> show positive message)
-
----
+1. **Fix Inventory.tsx build error** (nesting fix)
+2. **Notification store + polling hook** (foundation for real-time)
+3. **LiveOrderTicker + TopBar pulse animation**
+4. **Email verification page + routing**
+5. **Dashboard enhancements** (activity feed + quick actions)
+6. **Session timeout hook + warning dialog**
 
 ## Technical Details
 
-### New Files
+### Files to Create
 | File | Purpose |
 |------|---------|
-| `src/pages/Onboarding.tsx` | Multi-step onboarding wizard |
-| `src/components/pos/ReceiptDialog.tsx` | Printable receipt component |
-| `src/lib/currency.ts` | Currency formatting utility |
-| `src/lib/csv-export.ts` | CSV export utility |
-| `src/components/EmptyState.tsx` | Reusable empty state component |
+| `src/stores/notification-store.ts` | Zustand store for live notifications |
+| `src/hooks/use-realtime-notifications.ts` | Polling hook for notification updates |
+| `src/components/LiveOrderTicker.tsx` | Animated order activity bar |
+| `src/pages/VerifyEmail.tsx` | Email verification OTP page |
+| `src/hooks/use-session-timeout.ts` | Inactivity auto-logout hook |
+| `src/components/SessionWarning.tsx` | Session expiry warning dialog |
 
-### Modified Files
+### Files to Modify
 | File | Changes |
 |------|---------|
-| `src/App.tsx` | Add `/onboarding` route |
-| `src/pages/Register.tsx` | Redirect to `/onboarding` |
-| `src/pages/POS.tsx` | Receipt dialog, keyboard shortcuts, currency formatting |
-| `src/pages/Orders.tsx` | CSV export, currency formatting |
-| `src/pages/Menu.tsx` | CSV export, empty state, currency formatting |
-| `src/pages/Dashboard.tsx` | Currency formatting |
-| `src/pages/Reports.tsx` | Currency formatting |
-| `src/pages/Inventory.tsx` | CSV export, empty state |
-| `src/pages/Tables.tsx` | Empty state |
-| `src/pages/Categories.tsx` | Empty state |
-| `src/pages/Customers.tsx` | Empty state |
-| `src/pages/Shifts.tsx` | Currency formatting |
-| `src/stores/auth-store.ts` | Add `currency` field |
-| `src/index.css` | Add `@media print` styles |
-| `src/lib/api.ts` | Add demo data for onboarding endpoints |
-| `src/lib/demo-data.ts` | Add onboarding demo responses |
-
-### Execution Order
-1. Currency utility + auth store update (foundation)
-2. Empty state component (reusable)
-3. CSV export utility + wire to pages
-4. Onboarding wizard
-5. Receipt dialog
-6. Keyboard shortcuts
-7. Apply currency formatting across all pages
-
+| `src/pages/Inventory.tsx` | Fix JSX nesting build error |
+| `src/components/layout/TopBar.tsx` | Pulse animation on bell, connect to notification store |
+| `src/pages/Dashboard.tsx` | Add activity feed + quick actions cards |
+| `src/pages/POS.tsx` | Add LiveOrderTicker |
+| `src/pages/Register.tsx` | Redirect to `/verify-email` |
+| `src/App.tsx` | Add `/verify-email` route |
+| `src/lib/api.ts` | Add verify-email, resend-verification demo endpoints |
+| `src/lib/demo-data.ts` | Add simulated notification events |
+| `src/components/layout/DashboardLayout.tsx` | Add session timeout hook |
+| `src/index.css` | Add pulse animation keyframes |
