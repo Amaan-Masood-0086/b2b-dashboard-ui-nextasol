@@ -47,7 +47,7 @@ function getDemoData(method: string, url: string, body?: any): any {
   if (/\/products/.test(u)) return DEMO_PRODUCTS[0];
 
   // Orders
-  if (/\/orders$/.test(u) && method === 'get') return { data: DEMO_ORDERS, total: DEMO_ORDERS.length, page: 1, limit: 20, totalPages: 1 };
+  if (/^\/orders$/.test(u) && method === 'get') return { data: DEMO_ORDERS, total: DEMO_ORDERS.length, page: 1, limit: 20, totalPages: 1 };
   if (/\/orders$/.test(u) && method === 'post') return { id: 'new-order', orderNumber: 'ORD-' + Math.floor(Math.random() * 9000 + 1000) };
   if (/\/checkout$/.test(u)) return { message: 'Checkout complete' };
   if (/\/void$/.test(u)) return { message: 'Voided' };
