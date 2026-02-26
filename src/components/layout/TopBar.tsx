@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, ChevronDown, LogOut, User, Key, Building2, Moon, Sun } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
+import { useNotificationStore } from '@/stores/notification-store';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,7 @@ export function TopBar() {
   const { user, logout, selectedBranchId, setSelectedBranchId } = useAuthStore();
   const [notifOpen, setNotifOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { unreadCount: liveUnreadCount, notifications: liveNotifications, markRead: liveMarkRead, markAllRead: liveMarkAllRead } = useNotificationStore();
 
   const isPlatformAdmin = user?.role && ['super_admin', 'billing_admin', 'support_admin'].includes(user.role);
 
@@ -101,10 +103,10 @@ export function TopBar() {
         <Popover open={notifOpen} onOpenChange={setNotifOpen}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              {(unreadCount ?? 0) > 0 && (
+              <Bell className={`h-5 w-5 ${(unreadCount ?? 0) + liveUnreadCount > 0 ? 'animate-pulse-bell' : ''}`} />
+              {((unreadCount ?? 0) + liveUnreadCount) > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-destructive text-destructive-foreground">
-                  {unreadCount > 99 ? '99+' : unreadCount}
+                  {(unreadCount ?? 0) + liveUnreadCount > 99 ? '99+' : (unreadCount ?? 0) + liveUnreadCount}
                 </Badge>
               )}
             </Button>
@@ -112,26 +114,38 @@ export function TopBar() {
           <PopoverContent className="w-80 p-0" align="end">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <h4 className="font-semibold text-sm">Notifications</h4>
-              {(unreadCount ?? 0) > 0 && (
-                <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => markAllRead.mutate()}>
+              {((unreadCount ?? 0) + liveUnreadCount) > 0 && (
+                <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { markAllRead.mutate(); liveMarkAllRead(); }}>
                   Mark all read
                 </Button>
               )}
             </div>
             <ScrollArea className="h-[300px]">
-              {notifList.length === 0 ? (
+              {notifList.length === 0 && liveNotifications.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">No notifications</p>
               ) : (
-                notifList.map((n: Notification) => (
-                  <div
-                    key={n.id}
-                    className={`px-4 py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${!n.isRead ? 'bg-primary/5' : ''}`}
-                    onClick={() => !n.isRead && markRead.mutate(n.id)}
-                  >
-                    <p className="text-sm font-medium">{n.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
-                  </div>
-                ))
+                <>
+                  {liveNotifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`px-4 py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${!n.isRead ? 'bg-primary/5' : ''}`}
+                      onClick={() => !n.isRead && liveMarkRead(n.id)}
+                    >
+                      <p className="text-sm font-medium">{n.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
+                    </div>
+                  ))}
+                  {notifList.map((n: Notification) => (
+                    <div
+                      key={n.id}
+                      className={`px-4 py-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${!n.isRead ? 'bg-primary/5' : ''}`}
+                      onClick={() => !n.isRead && markRead.mutate(n.id)}
+                    >
+                      <p className="text-sm font-medium">{n.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
+                    </div>
+                  ))}
+                </>
               )}
             </ScrollArea>
           </PopoverContent>

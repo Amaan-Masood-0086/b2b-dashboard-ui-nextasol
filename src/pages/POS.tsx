@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { LiveOrderTicker } from '@/components/LiveOrderTicker';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, Minus, Trash2, ShoppingBag, X, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import api from '@/lib/api';
@@ -217,7 +218,9 @@ export default function POSPage() {
   const change = paymentMethod === 'cash' && amountReceived ? parseFloat(amountReceived) - total : 0;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] relative">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+      <LiveOrderTicker />
+      <div className="flex flex-1 relative min-h-0">
       {/* Product area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Shift bar */}
@@ -495,6 +498,7 @@ export default function POSPage() {
         businessName="CloudPOS Demo Restaurant"
         branchName="Main Branch"
       />
+      </div>
     </div>
   );
 }
