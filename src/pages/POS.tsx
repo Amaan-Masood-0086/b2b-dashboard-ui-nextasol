@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Minus, Trash2, ShoppingBag, X } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ShoppingBag, X, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore, CartModifier } from '@/stores/cart-store';
@@ -27,6 +27,7 @@ export default function POSPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [modifierProduct, setModifierProduct] = useState<Product | null>(null);
   const [selectedModifiers, setSelectedModifiers] = useState<CartModifier[]>([]);
+  const [cartOpen, setCartOpen] = useState(true);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'split'>('cash');
   const [amountReceived, setAmountReceived] = useState('');
@@ -160,7 +161,7 @@ export default function POSPage() {
   const change = paymentMethod === 'cash' && amountReceived ? parseFloat(amountReceived) - total : 0;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-3.5rem)] relative">
       {/* Product area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Shift bar */}
@@ -193,14 +194,14 @@ export default function POSPage() {
 
         {/* Product grid */}
         <ScrollArea className="flex-1 p-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {products.map((product) => (
               <Card
                 key={product.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => handleAddProduct(product)}
               >
-                <CardContent className="p-3">
+                <CardContent className="p-3 min-h-[4.5rem] flex flex-col justify-center">
                   {product.imageUrl && (
                     <div className="aspect-square rounded-md bg-muted mb-2 overflow-hidden">
                       <img src={product.imageUrl.startsWith('/') ? `http://localhost:3000${product.imageUrl}` : product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
@@ -216,19 +217,39 @@ export default function POSPage() {
             ))}
           </div>
         </ScrollArea>
+
+        {/* Floating cart toggle for tablet */}
+        {!cartOpen && (
+          <Button
+            className="absolute right-4 bottom-4 h-14 w-14 rounded-full shadow-lg md:hidden z-10"
+            onClick={() => setCartOpen(true)}
+          >
+            <ShoppingBag className="h-5 w-5" />
+            {cart.items.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {cart.items.length}
+              </span>
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Cart sidebar */}
-      <div className="w-[340px] border-l flex flex-col bg-card">
+      <div className={`${cartOpen ? 'w-[300px] lg:w-[340px]' : 'w-0 overflow-hidden'} border-l flex flex-col bg-card transition-all duration-200 max-md:absolute max-md:right-0 max-md:top-0 max-md:bottom-0 max-md:z-20 max-md:shadow-xl ${cartOpen ? 'max-md:w-[320px]' : ''}`}>
         <div className="px-4 py-3 border-b">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" /> Cart
               <Badge variant="secondary" className="text-xs">{cart.items.length}</Badge>
             </h3>
-            {cart.items.length > 0 && (
-              <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={cart.clearCart}>Clear</Button>
-            )}
+            <div className="flex items-center gap-1">
+              {cart.items.length > 0 && (
+                <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={cart.clearCart}>Clear</Button>
+              )}
+              <Button variant="ghost" size="icon" className="h-7 w-7 md:hidden" onClick={() => setCartOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div className="flex gap-2 mt-2">
