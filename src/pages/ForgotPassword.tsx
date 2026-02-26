@@ -3,7 +3,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/hooks/use-theme';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { toast } from 'sonner';
 const schema = z.object({ email: z.string().email() });
 
 export default function ForgotPasswordPage() {
+  const { theme, toggleTheme } = useTheme();
   const { register, handleSubmit, formState: { errors } } = useForm<{ email: string }>({
     resolver: zodResolver(schema),
   });
@@ -25,7 +27,10 @@ export default function ForgotPasswordPage() {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 relative">
+      <Button variant="ghost" size="icon" className="absolute top-4 right-4" onClick={toggleTheme} aria-label="Toggle theme">
+        {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </Button>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Forgot Password</CardTitle>
