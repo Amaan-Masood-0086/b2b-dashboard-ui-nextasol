@@ -10,6 +10,7 @@ import LoginPage from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import OnboardingPage from "./pages/Onboarding";
 import ForgotPasswordPage from "./pages/ForgotPassword";
+import VerifyEmailPage from "./pages/VerifyEmail";
 import ResetPasswordPage from "./pages/ResetPassword";
 import DashboardPage from "./pages/Dashboard";
 import POSPage from "./pages/POS";
@@ -44,7 +45,7 @@ const App = () => (
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Protected routes with dashboard layout */}

@@ -64,105 +64,106 @@ export default function InventoryPage() {
 
   return (
     <UpgradeGate requiredPlan="Pro" featureName="Inventory Management">
-    <div className="p-6 space-y-4">
-        <h1 className="text-2xl font-bold">Inventory</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => exportToCSV(logList, [
-            { header: 'Product', accessor: (l: any) => l.product?.name || '' },
-            { header: 'Type', accessor: (l: any) => l.type?.replace('_', ' ') || '' },
-            { header: 'Quantity', accessor: (l: any) => l.quantity },
-            { header: 'Reason', accessor: (l: any) => l.reason || '' },
-            { header: 'Date', accessor: (l: any) => format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm') },
-          ], 'inventory-logs')}>
-            <Download className="h-4 w-4 mr-1" /> Export
-          </Button>
-          <Button size="sm" onClick={() => { setForm({ productId: '', quantity: '', type: 'manual_add', reason: '' }); setAdjustOpen(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> Adjust Stock
-          </Button>
+      <div className="p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Inventory</h1>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => exportToCSV(logList, [
+              { header: 'Product', accessor: (l: any) => l.product?.name || '' },
+              { header: 'Type', accessor: (l: any) => l.type?.replace('_', ' ') || '' },
+              { header: 'Quantity', accessor: (l: any) => l.quantity },
+              { header: 'Reason', accessor: (l: any) => l.reason || '' },
+              { header: 'Date', accessor: (l: any) => format(new Date(l.createdAt), 'yyyy-MM-dd HH:mm') },
+            ], 'inventory-logs')}>
+              <Download className="h-4 w-4 mr-1" /> Export
+            </Button>
+            <Button size="sm" onClick={() => { setForm({ productId: '', quantity: '', type: 'manual_add', reason: '' }); setAdjustOpen(true); }}>
+              <Plus className="h-4 w-4 mr-1" /> Adjust Stock
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {lowStockList.length > 0 && (
-        <Card className="border-warning/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2 text-warning"><AlertCircle className="h-4 w-4" /> Low Stock Alerts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {lowStockList.map((p) => (
-                <Badge key={p.id} variant="outline" className="text-warning border-warning/30">{p.name} ({p.stock})</Badge>
-              ))}
-            </div>
+        {lowStockList.length > 0 && (
+          <Card className="border-warning/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2 text-warning"><AlertCircle className="h-4 w-4" /> Low Stock Alerts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {lowStockList.map((p) => (
+                  <Badge key={p.id} variant="outline" className="text-warning border-warning/30">{p.name} ({p.stock})</Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader><CardTitle className="text-base">Stock Logs</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logList.map((log: any) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="font-medium">{log.product?.name || '—'}</TableCell>
+                    <TableCell className="capitalize">{log.type?.replace('_', ' ')}</TableCell>
+                    <TableCell>{log.quantity}</TableCell>
+                    <TableCell className="text-muted-foreground">{log.reason || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{format(new Date(log.createdAt), 'MMM dd, HH:mm')}</TableCell>
+                  </TableRow>
+                ))}
+                {logList.length === 0 && <TableRow><TableCell colSpan={5} className="text-center p-0"><EmptyState icon={Package} title="No inventory logs" description="Stock adjustments and sales will be tracked here." /></TableCell></TableRow>}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
-      )}
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Stock Logs</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logList.map((log: any) => (
-                <TableRow key={log.id}>
-                  <TableCell className="font-medium">{log.product?.name || '—'}</TableCell>
-                  <TableCell className="capitalize">{log.type?.replace('_', ' ')}</TableCell>
-                  <TableCell>{log.quantity}</TableCell>
-                  <TableCell className="text-muted-foreground">{log.reason || '—'}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{format(new Date(log.createdAt), 'MMM dd, HH:mm')}</TableCell>
-                </TableRow>
-              ))}
-              {logList.length === 0 && <TableRow><TableCell colSpan={5} className="text-center p-0"><EmptyState icon={Package} title="No inventory logs" description="Stock adjustments and sales will be tracked here." /></TableCell></TableRow>}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Adjust Stock</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label>Product</Label>
-              <Select value={form.productId} onValueChange={(v) => setForm({ ...form, productId: v })}>
-                <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
-                <SelectContent>{productList.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</SelectItem>)}</SelectContent>
-              </Select>
+        <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Adjust Stock</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Product</Label>
+                <Select value={form.productId} onValueChange={(v) => setForm({ ...form, productId: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                  <SelectContent>{productList.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label>Quantity</Label><Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} /></div>
+              <div className="space-y-1.5">
+                <Label>Type</Label>
+                <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual_add">Add</SelectItem>
+                    <SelectItem value="manual_subtract">Subtract</SelectItem>
+                    <SelectItem value="adjustment">Adjustment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label>Reason</Label><Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></div>
             </div>
-            <div className="space-y-1.5"><Label>Quantity</Label><Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} /></div>
-            <div className="space-y-1.5">
-              <Label>Type</Label>
-              <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual_add">Add</SelectItem>
-                  <SelectItem value="manual_subtract">Subtract</SelectItem>
-                  <SelectItem value="adjustment">Adjustment</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5"><Label>Reason</Label><Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAdjustOpen(false)}>Cancel</Button>
-            <Button
-              onClick={() => adjustMutation.mutate({ productId: form.productId, quantity: parseInt(form.quantity), type: form.type, reason: form.reason })}
-              disabled={!form.productId || !form.quantity}
-            >
-              Adjust
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAdjustOpen(false)}>Cancel</Button>
+              <Button
+                onClick={() => adjustMutation.mutate({ productId: form.productId, quantity: parseInt(form.quantity), type: form.type, reason: form.reason })}
+                disabled={!form.productId || !form.quantity}
+              >
+                Adjust
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </UpgradeGate>
   );
 }

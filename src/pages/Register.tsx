@@ -36,8 +36,8 @@ export default function RegisterPage() {
     onSuccess: (res: any) => {
       const { accessToken, user } = res.data;
       login(accessToken, user);
-      toast.success('Account created successfully!');
-      navigate('/onboarding');
+      toast.success('Account created! Please verify your email.');
+      navigate('/verify-email');
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Registration failed');

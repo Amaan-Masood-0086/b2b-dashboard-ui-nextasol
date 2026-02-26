@@ -13,6 +13,8 @@ function getDemoData(method: string, url: string): any {
   if (u === '/auth/change-password') return { message: 'Password changed' };
   if (u === '/auth/forgot-password') return { message: 'Email sent' };
   if (u === '/auth/reset-password') return { message: 'Password reset' };
+  if (u === '/auth/verify-email') return { message: 'Email verified' };
+  if (u === '/auth/resend-verification') return { message: 'Code resent' };
 
   // Branches
   if (u === '/branches' && method === 'get') return DEMO_BRANCHES;
