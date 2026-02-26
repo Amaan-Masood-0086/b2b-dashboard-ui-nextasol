@@ -22,6 +22,7 @@ import ModifiersPage from "./pages/Modifiers";
 import TablesPage from "./pages/Tables";
 import InventoryPage from "./pages/Inventory";
 import CustomersPage from "./pages/Customers";
+import MembershipsPage from "./pages/Memberships";
 import ShiftsPage from "./pages/Shifts";
 import BranchesPage from "./pages/Branches";
 import UsersPage from "./pages/Users";
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/tables" element={<ProtectedRoute allowedRoles={[...MERCHANT_ALL]}><TablesPage /></ProtectedRoute>} />
             <Route path="/shifts" element={<ProtectedRoute allowedRoles={[...MERCHANT_ALL]}><ShiftsPage /></ProtectedRoute>} />
             <Route path="/customers" element={<ProtectedRoute allowedRoles={[...MERCHANT_ALL]}><CustomersPage /></ProtectedRoute>} />
+            <Route path="/memberships" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><MembershipsPage /></ProtectedRoute>} />
             <Route path="/menu" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><MenuPage /></ProtectedRoute>} />
             <Route path="/categories" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><CategoriesPage /></ProtectedRoute>} />
             <Route path="/modifiers" element={<ProtectedRoute allowedRoles={[...MERCHANT_MGMT]}><ModifiersPage /></ProtectedRoute>} />

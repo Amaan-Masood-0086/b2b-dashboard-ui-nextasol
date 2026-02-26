@@ -4,7 +4,7 @@ import { Plus, Pencil, Search, Eye, Users } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 import { EmptyState } from '@/components/EmptyState';
 import api from '@/lib/api';
-import { Customer, Order } from '@/lib/types';
+import { Customer, Membership } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 export default function CustomersPage() {
@@ -20,11 +22,16 @@ export default function CustomersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null);
   const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', notes: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', notes: '', membershipId: '' });
 
   const { data: customers } = useQuery({
     queryKey: ['customers', search],
     queryFn: () => api.get('/customers', { params: { search: search || undefined } }).then((r) => r.data),
+  });
+
+  const { data: memberships } = useQuery({
+    queryKey: ['memberships'],
+    queryFn: () => api.get('/memberships').then((r: any) => r.data),
   });
 
   const customerDetail = useQuery({
@@ -46,11 +53,13 @@ export default function CustomersPage() {
   });
 
   const list: Customer[] = Array.isArray(customers) ? customers : customers?.data ?? [];
+  const membershipList: Membership[] = Array.isArray(memberships) ? memberships : [];
+  const activeMemberships = membershipList.filter(m => m.isActive);
 
-  const openCreate = () => { setEditCustomer(null); setForm({ name: '', email: '', phone: '', notes: '' }); setDialogOpen(true); };
-  const openEdit = (c: Customer) => { setEditCustomer(c); setForm({ name: c.name, email: c.email || '', phone: c.phone || '', notes: c.notes || '' }); setDialogOpen(true); };
+  const openCreate = () => { setEditCustomer(null); setForm({ name: '', email: '', phone: '', notes: '', membershipId: '' }); setDialogOpen(true); };
+  const openEdit = (c: Customer) => { setEditCustomer(c); setForm({ name: c.name, email: c.email || '', phone: c.phone || '', notes: c.notes || '', membershipId: c.membershipId || '' }); setDialogOpen(true); };
   const handleSubmit = () => {
-    const data = { name: form.name, email: form.email || undefined, phone: form.phone || undefined, notes: form.notes || undefined };
+    const data = { name: form.name, email: form.email || undefined, phone: form.phone || undefined, notes: form.notes || undefined, membershipId: form.membershipId || undefined };
     if (editCustomer) updateMutation.mutate({ id: editCustomer.id, data });
     else createMutation.mutate(data);
   };
@@ -68,13 +77,20 @@ export default function CustomersPage() {
       <Card>
         <CardContent className="p-0">
           <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead><TableHead>Orders</TableHead><TableHead>Total Spent</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead><TableHead>Membership</TableHead><TableHead>Orders</TableHead><TableHead>Total Spent</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
             <TableBody>
               {list.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell className="text-muted-foreground">{c.email || '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{c.phone || '—'}</TableCell>
+                  <TableCell>
+                    {c.membership ? (
+                      <Badge variant="outline" className="bg-primary/10 text-primary">{c.membership.name}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">None</span>
+                    )}
+                  </TableCell>
                   <TableCell>{c.totalOrders ?? 0}</TableCell>
                   <TableCell>{formatCurrency(Number(c.totalSpent ?? 0))}</TableCell>
                   <TableCell className="text-right">
@@ -83,7 +99,7 @@ export default function CustomersPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {list.length === 0 && <TableRow><TableCell colSpan={6} className="text-center p-0"><EmptyState icon={Users} title="No customers yet" description="Add customers to track their orders and preferences." actionLabel="Add Customer" onAction={openCreate} /></TableCell></TableRow>}
+              {list.length === 0 && <TableRow><TableCell colSpan={7} className="text-center p-0"><EmptyState icon={Users} title="No customers yet" description="Add customers to track their orders and preferences." actionLabel="Add Customer" onAction={openCreate} /></TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
@@ -96,6 +112,18 @@ export default function CustomersPage() {
             <div className="space-y-1.5"><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+            <div className="space-y-1.5">
+              <Label>Membership</Label>
+              <Select value={form.membershipId || 'none'} onValueChange={(v) => setForm({ ...form, membershipId: v === 'none' ? '' : v })}>
+                <SelectTrigger><SelectValue placeholder="Select membership" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Membership</SelectItem>
+                  {activeMemberships.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name} — {m.description}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-1.5"><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
@@ -114,6 +142,13 @@ export default function CustomersPage() {
                 <div><span className="text-muted-foreground">Email:</span> {customerDetail.data.email || '—'}</div>
                 <div><span className="text-muted-foreground">Phone:</span> {customerDetail.data.phone || '—'}</div>
               </div>
+              {customerDetail.data.membership && (
+                <div className="rounded-lg border p-3 bg-primary/5">
+                  <p className="font-medium text-sm">{customerDetail.data.membership.name}</p>
+                  <p className="text-xs text-muted-foreground">{customerDetail.data.membership.description}</p>
+                  <Badge variant="outline" className="mt-1 text-xs">{customerDetail.data.membership.code}</Badge>
+                </div>
+              )}
               {customerDetail.data.notes && <p className="text-muted-foreground">{customerDetail.data.notes}</p>}
             </div>
           )}

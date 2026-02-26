@@ -95,6 +95,8 @@ export interface Customer {
   notes?: string;
   totalOrders?: number;
   totalSpent?: number;
+  membershipId?: string;
+  membership?: Membership;
 }
 
 export interface Shift {
@@ -151,6 +153,19 @@ export interface Subscription {
   planId: string;
   plan?: SubscriptionPlan;
   status: string;
+  createdAt: string;
+}
+
+export interface Membership {
+  id: string;
+  name: string;
+  code: string;
+  benefitType: 'percentage_discount' | 'fixed_discount' | 'free_delivery' | 'custom_deal';
+  benefitValue: number;
+  description: string;
+  isActive: boolean;
+  validFrom?: string;
+  validUntil?: string;
   createdAt: string;
 }
 

@@ -5,7 +5,7 @@ import { Search, Plus, Minus, Trash2, ShoppingBag, X, PanelRightOpen, PanelRight
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore, CartModifier } from '@/stores/cart-store';
-import { Product, Category, Table, ModifierGroup, Customer } from '@/lib/types';
+import { Product, Category, Table, ModifierGroup, Customer, Membership } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
 import { ReceiptDialog } from '@/components/pos/ReceiptDialog';
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
@@ -333,17 +333,48 @@ export default function POSPage() {
             </Select>
           )}
 
-          <Select value={cart.customerId || 'none'} onValueChange={(v) => cart.setCustomerId(v === 'none' ? null : v)}>
+          <Select value={cart.customerId || 'none'} onValueChange={(v) => {
+            const id = v === 'none' ? null : v;
+            cart.setCustomerId(id);
+            // Auto-apply membership discount
+            if (id) {
+              const customer = customerList.find(c => c.id === id);
+              if (customer?.membership?.isActive) {
+                const m = customer.membership;
+                if (m.benefitType === 'percentage_discount') {
+                  cart.setDiscount('percentage', m.benefitValue);
+                } else if (m.benefitType === 'fixed_discount') {
+                  cart.setDiscount('fixed', m.benefitValue);
+                }
+              }
+            } else {
+              cart.setDiscount(null, 0);
+            }
+          }}>
             <SelectTrigger className="mt-2 h-8 text-xs">
               <SelectValue placeholder="Customer (optional)" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">No customer</SelectItem>
               {customerList.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                  {c.membership?.isActive && <span className="ml-1 text-muted-foreground">• {c.membership.name}</span>}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {/* Show membership badge if customer has one */}
+          {cart.customerId && (() => {
+            const cust = customerList.find(c => c.id === cart.customerId);
+            if (!cust?.membership?.isActive) return null;
+            return (
+              <div className="mt-1.5 rounded border border-primary/30 bg-primary/5 px-2 py-1 text-[11px] text-primary flex items-center gap-1">
+                <span className="font-medium">{cust.membership.name}</span>
+                <span>— {cust.membership.description}</span>
+              </div>
+            );
+          })()}
         </div>
 
         <ScrollArea className="flex-1">
