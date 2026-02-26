@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, MonitorSmartphone, ShoppingCart, UtensilsCrossed,
   Package, Tags, Layers, Warehouse, Users, Building2, BarChart3,
-  Settings, ScrollText, Shield, CreditCard, Store, Bell, Clock
+  Settings, ScrollText, Shield, CreditCard, Store, Bell, Clock, ChefHat
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuthStore, UserRole } from '@/stores/auth-store';
@@ -36,6 +36,7 @@ const navSections: NavSection[] = [
     label: 'Operations',
     items: [
       { title: 'Orders', url: '/orders', icon: ShoppingCart },
+      { title: 'Kitchen', url: '/kitchen', icon: ChefHat },
       { title: 'Tables', url: '/tables', icon: UtensilsCrossed },
       { title: 'Shifts', url: '/shifts', icon: Clock },
     ],
