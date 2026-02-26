@@ -1,113 +1,67 @@
 
-# Complete CloudPOS: Real-Time Notifications, Bug Fixes, and Remaining Features
 
-## 1. Fix Build Error in Inventory.tsx
-The `UpgradeGate` wrapper has mismatched JSX nesting -- the `<div>` closes before `</UpgradeGate>`. Fix the indentation/nesting so the closing tags are in the correct order.
+# CloudPOS Enhancement Plan: Production-Ready Polish
 
-## 2. Real-Time Notifications via Polling
+## Summary
+The app is fully functional with all major features working correctly. The following enhancements will add production-ready polish and missing quality-of-life features.
 
-Since there's no backend/WebSocket available (demo mode), implement a polling-based notification system that simulates real-time order sync across terminals.
+## 1. Sound Alerts for Kitchen Display
+Add an audio notification when new orders arrive on the KDS page to alert kitchen staff who may not be watching the screen.
 
-### New: Notification Store (`src/stores/notification-store.ts`)
-- Zustand store managing a live notification feed
-- `addNotification(notification)` pushes to the list and shows a sonner toast
-- `notifications`, `unreadCount`, `markRead`, `markAllRead`
+- Play a short beep/chime sound when a new order appears
+- Add a mute/unmute toggle button in the KDS header
+- Use the Web Audio API (no external sound files needed) to generate a simple notification tone
+- Store mute preference in localStorage
 
-### New: Notification Hook (`src/hooks/use-realtime-notifications.ts`)
-- Polls `/notifications/unread-count` every 15 seconds using React Query
-- When new notifications arrive (count changes), fetches full list and pushes to store
-- Shows sonner toast for new notifications (order completed, low stock, etc.)
+## 2. Print Receipt Support
+Add a "Print" button to the receipt dialog that uses `window.print()` with a print-optimized stylesheet.
 
-### New: Live Order Ticker (`src/components/LiveOrderTicker.tsx`)
-- Small bar at the top of POS and Dashboard pages showing the latest order activity
-- Polls `/orders` every 20 seconds with `refetchInterval`
-- Shows "Order #ORD-XXXX just completed" with a fade animation
+- Add print CSS media query to hide non-receipt elements
+- Format receipt in a thermal-printer-friendly layout (80mm width)
+- Include business name, order details, totals, and timestamp
 
-### Update: TopBar Notifications
-- Connect the existing TopBar notification bell to the notification store for real-time count updates
-- Add a subtle pulse animation on the bell icon when new notifications arrive
+## 3. Keyboard Shortcuts Help Modal
+Add a "?" keyboard shortcut that shows all available shortcuts in a modal overlay.
 
-### Demo Data Enhancement
-- Add a simulated event generator in demo-data that rotates through fake events (new order, stock alert, shift opened) to make polling feel alive
+- F2: Focus search in POS
+- Enter: Proceed to checkout
+- Delete: Clear cart
+- Escape: Close dialogs
+- Display as a floating help button in POS page footer
 
-## 3. Email Verification Flow (Post-Registration)
+## 4. Order Status Sound Notifications
+Extend the notification system to play distinct sounds for different event types:
+- New order: short chime
+- Low stock alert: warning tone
+- Add a global sound toggle in Settings page
 
-### New: Email Verification Page (`src/pages/VerifyEmail.tsx`)
-- Shows after registration: "We sent a verification code to your email"
-- 6-digit OTP input using the existing `input-otp` component
-- "Resend code" button with 60-second cooldown timer
-- On success, redirect to `/onboarding`
-
-### Updates
-- `Register.tsx`: redirect to `/verify-email` instead of `/onboarding`
-- `App.tsx`: add `/verify-email` route
-- `api.ts` + `demo-data.ts`: add `/auth/verify-email` and `/auth/resend-verification` demo endpoints
-
-## 4. Activity Feed on Dashboard
-
-### Update: Dashboard.tsx
-- Add a "Recent Activity" card below existing charts
-- Shows last 5 audit log entries (fetched from `/audit-logs`)
-- Each entry shows icon, action description, user name, and relative time ("2 min ago")
-- Links to full Audit Logs page
-
-## 5. Quick Actions Widget on Dashboard
-
-### Update: Dashboard.tsx
-- Add a "Quick Actions" card with shortcut buttons:
-  - "New Order" -> `/pos`
-  - "Add Product" -> `/menu`
-  - "View Reports" -> `/reports`
-  - "Manage Staff" -> `/users`
-- Uses icon buttons in a 2x2 grid
-
-## 6. Session Timeout / Auto-Logout
-
-### New: Hook (`src/hooks/use-session-timeout.ts`)
-- Tracks user activity (mouse, keyboard, scroll)
-- After 30 minutes of inactivity, show a warning dialog
-- After 5 more minutes, auto-logout via auth store
-- Reset timer on any activity
-
-### New: Session Warning Dialog
-- "Your session is about to expire" with countdown
-- "Stay Logged In" button resets timer
-- "Logout" button logs out immediately
-
-### Update: DashboardLayout.tsx
-- Include the session timeout hook
-
-## Implementation Sequence
-
-1. **Fix Inventory.tsx build error** (nesting fix)
-2. **Notification store + polling hook** (foundation for real-time)
-3. **LiveOrderTicker + TopBar pulse animation**
-4. **Email verification page + routing**
-5. **Dashboard enhancements** (activity feed + quick actions)
-6. **Session timeout hook + warning dialog**
+## 5. Responsive Mobile Improvements
+Optimize the KDS and Dashboard pages for mobile/tablet viewing:
+- KDS: Single column layout on mobile with larger touch targets
+- Dashboard: Stack Quick Actions vertically on small screens
+- Ensure all action buttons have minimum 44px touch targets
 
 ## Technical Details
 
 ### Files to Create
 | File | Purpose |
 |------|---------|
-| `src/stores/notification-store.ts` | Zustand store for live notifications |
-| `src/hooks/use-realtime-notifications.ts` | Polling hook for notification updates |
-| `src/components/LiveOrderTicker.tsx` | Animated order activity bar |
-| `src/pages/VerifyEmail.tsx` | Email verification OTP page |
-| `src/hooks/use-session-timeout.ts` | Inactivity auto-logout hook |
-| `src/components/SessionWarning.tsx` | Session expiry warning dialog |
+| `src/hooks/use-sound.ts` | Web Audio API hook for notification sounds |
+| `src/components/KeyboardShortcutsDialog.tsx` | Shortcuts help modal |
 
 ### Files to Modify
 | File | Changes |
 |------|---------|
-| `src/pages/Inventory.tsx` | Fix JSX nesting build error |
-| `src/components/layout/TopBar.tsx` | Pulse animation on bell, connect to notification store |
-| `src/pages/Dashboard.tsx` | Add activity feed + quick actions cards |
-| `src/pages/POS.tsx` | Add LiveOrderTicker |
-| `src/pages/Register.tsx` | Redirect to `/verify-email` |
-| `src/App.tsx` | Add `/verify-email` route |
-| `src/lib/api.ts` | Add verify-email, resend-verification demo endpoints |
-| `src/lib/demo-data.ts` | Add simulated notification events |
-| `src/components/layout/DashboardLayout.tsx` | Add session timeout hook |
-| `src/index.css` | Add pulse animation keyframes |
+| `src/pages/Kitchen.tsx` | Add sound alerts on new order arrival, mute toggle |
+| `src/components/pos/ReceiptDialog.tsx` | Add print button with print-optimized CSS |
+| `src/pages/POS.tsx` | Add keyboard shortcuts help button |
+| `src/index.css` | Add print media query styles for receipts |
+| `src/pages/Settings.tsx` | Add sound notification toggle |
+
+### Implementation Sequence
+1. Create `use-sound` hook with Web Audio API
+2. Add sound alerts to Kitchen Display
+3. Add print receipt functionality
+4. Create keyboard shortcuts dialog
+5. Mobile responsiveness pass
+
