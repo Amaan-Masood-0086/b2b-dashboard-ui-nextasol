@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, ChevronDown, LogOut, User, Key, Building2 } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, User, Key, Building2, Moon, Sun } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -19,12 +19,14 @@ import {
 } from '@/components/ui/select';
 import { Branch, Notification } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTheme } from '@/hooks/use-theme';
 
 export function TopBar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, logout, selectedBranchId, setSelectedBranchId } = useAuthStore();
   const [notifOpen, setNotifOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const isPlatformAdmin = user?.role && ['super_admin', 'billing_admin', 'support_admin'].includes(user.role);
 
@@ -90,6 +92,10 @@ export function TopBar() {
       )}
 
       <div className="flex-1" />
+
+      <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9">
+        {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+      </Button>
 
       {!isPlatformAdmin && (
         <Popover open={notifOpen} onOpenChange={setNotifOpen}>
