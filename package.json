@@ -1,7 +1,11 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "cloudpos-nextasol",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Enterprise-grade, multi-tenant SaaS Point of Sale frontend — built by NextaSol",
+  "author": "NextaSol <hello@nextasol.com> (https://nextasol.com)",
+  "homepage": "https://github.com/Amaan-Masood-0086/b2b-dashboard-ui-nextasol",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
